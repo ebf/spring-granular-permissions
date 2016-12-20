@@ -11,6 +11,7 @@ import de.ebf.security.jwt.testapp.TestApplication
 import de.ebf.security.jwt.testapp.models.Model
 
 
+
 @ContextConfiguration(classes = TestApplication)
 class InitPermissionsIntegrationSpec extends Specification {
 

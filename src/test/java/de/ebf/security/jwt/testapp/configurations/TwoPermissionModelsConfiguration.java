@@ -12,7 +12,7 @@ import de.ebf.security.jwt.testapp.othermodels.PermissionModelWithoutPermissionN
 
 @Configuration
 @EnableAutoConfiguration
-@PropertySource(value = { "classpath:application.properties" })
+@PropertySource(value = { "classpath:init-permissions-disabled.properties" })
 @Import(JWTPermissionsConfig.class)
 @EntityScan(basePackageClasses = { Model.class, PermissionModelWithoutPermissionNameField.class })
 public class TwoPermissionModelsConfiguration {

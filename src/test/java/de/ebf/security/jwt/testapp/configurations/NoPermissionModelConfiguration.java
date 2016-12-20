@@ -11,7 +11,7 @@ import de.ebf.security.jwt.testapp.controllers.TestController;
 
 @Configuration
 @EnableAutoConfiguration
-@PropertySource(value = { "classpath:application.properties" })
+@PropertySource(value = { "classpath:init-permissions-disabled.properties" })
 @Import(JWTPermissionsConfig.class)
 @EntityScan(basePackageClasses = { TestController.class })
 public class NoPermissionModelConfiguration {

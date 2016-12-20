@@ -11,16 +11,21 @@ jar {
     }
 }
 
-repositories { mavenCentral() }
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
 
 dependencies {
- 
+
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
     compile group: 'commons-collections', name: 'commons-collections', version: '3.2'
     compile("com.nimbusds:nimbus-jose-jwt:4.15")
     compile("org.springframework.boot:spring-boot-starter-security:1.4.2.RELEASE")
     compile("org.springframework.boot:spring-boot-starter-data-jpa:1.4.2.RELEASE")
-
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    runtime group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
     testCompile("com.h2database:h2:1.4.191")
     testCompile 'org.springframework:spring-test:4.2.6.RELEASE'
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
