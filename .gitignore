@@ -1,5 +1,2 @@
-.classpath
-.gradle/
-.project
-.settings/
-bin/
+/bin/
+/build/
