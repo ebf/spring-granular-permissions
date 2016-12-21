@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'eclipse'
+apply plugin: 'maven'
 
 sourceCompatibility = 1.8
 version = '0.0.1'
@@ -21,7 +22,7 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
     compile("org.springframework.boot:spring-boot-starter-security:1.4.2.RELEASE")
     compile("org.springframework.boot:spring-boot-starter-data-jpa:1.4.2.RELEASE")
-    
+
     testCompile("com.h2database:h2:1.4.191")
     testCompile 'org.springframework:spring-test:4.2.6.RELEASE'
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
@@ -33,3 +34,18 @@ dependencies {
     testCompile("org.springframework.boot:spring-boot-starter-data-rest:1.4.2.RELEASE")
     testCompile("org.apache.httpcomponents:fluent-hc:4.5.1")
 }
+
+configurations { deployerJars }
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            configuration = configurations.deployerJars
+            repository(url: 'http://repository.dev.ebf.de/nexus/content/repositories/releases')
+            pom.groupId = 'de.ebf'
+            pom.artifactId = 'spring-granular-permissions'
+            pom.version = rootProject.version
+        }
+    }
+}
+
