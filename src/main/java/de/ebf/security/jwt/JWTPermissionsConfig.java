@@ -17,7 +17,7 @@ import de.ebf.security.jwt.internal.services.impl.InterfaceBeanScanner;
 import de.ebf.security.jwt.internal.services.impl.ReflectivePermissionModelOperations;
 
 @Configuration
-@Import({ HttpSecurityConfiguration.class, MethodSecurityConfiguration.class })
+@Import({ MethodSecurityConfiguration.class })
 public class JWTPermissionsConfig {
 
     @Bean

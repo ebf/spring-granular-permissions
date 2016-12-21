@@ -11,8 +11,6 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 
-import de.ebf.security.jwt.authentication.JWTAuthentication;
-
 public class PermissionAccessDecisionManager implements AccessDecisionManager {
 
     private static final Logger logger = LoggerFactory.getLogger(PermissionAccessDecisionManager.class);
@@ -21,11 +19,11 @@ public class PermissionAccessDecisionManager implements AccessDecisionManager {
     public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes)
             throws AccessDeniedException, InsufficientAuthenticationException {
 
-        if (!JWTAuthentication.class.isAssignableFrom(authentication.getClass())) {
-            throw new InsufficientAuthenticationException("Authentication object unknown.");
-        }
-
         Stream<ConfigAttribute> accessableAttributes = configAttributes.stream().filter(configAttr -> {
+            if (authentication.getAuthorities() == null) {
+                return false;
+            }
+
             return authentication.getAuthorities().stream().filter(authority -> {
                 return authority.getAuthority().equals(configAttr.getAttribute());
             }).count() == 1;
