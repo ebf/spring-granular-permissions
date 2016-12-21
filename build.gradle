@@ -41,7 +41,9 @@ uploadArchives {
     repositories {
         mavenDeployer {
             configuration = configurations.deployerJars
-            repository(url: 'http://repository.dev.ebf.de/nexus/content/repositories/releases')
+            repository(url: 'http://repository.dev.ebf.de/nexus/content/repositories/releases') {
+                authentication(userName: "deployment", password: "ebf4ever")
+            }
             pom.groupId = 'de.ebf'
             pom.artifactId = 'spring-granular-permissions'
             pom.version = rootProject.version
