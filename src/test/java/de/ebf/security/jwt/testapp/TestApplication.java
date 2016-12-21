@@ -8,16 +8,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
-import de.ebf.security.jwt.JWTPermissionsConfig;
-import de.ebf.security.jwt.internal.services.PermissionScanner;
-import de.ebf.security.jwt.internal.services.impl.DefaultPermissionScanner;
+import de.ebf.security.PermissionsConfig;
 import de.ebf.security.jwt.testapp.controllers.TestController;
 import de.ebf.security.jwt.testapp.models.Model;
+import de.ebf.security.scanner.DefaultPermissionScanner;
+import de.ebf.security.scanner.PermissionScanner;
 
 @Configuration
 @EnableAutoConfiguration
 @PropertySource(value = { "classpath:application.properties" })
-@Import(JWTPermissionsConfig.class)
+@Import(PermissionsConfig.class)
 @EntityScan(basePackageClasses = Model.class)
 @ComponentScan(basePackageClasses = TestController.class)
 public class TestApplication {

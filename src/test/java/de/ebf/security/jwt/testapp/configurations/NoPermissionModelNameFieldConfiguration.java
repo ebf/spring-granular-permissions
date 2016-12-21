@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
-import de.ebf.security.jwt.JWTPermissionsConfig;
+import de.ebf.security.PermissionsConfig;
 import de.ebf.security.jwt.testapp.othermodels.PermissionModelWithoutPermissionNameField;
 
 @Configuration
 @EnableAutoConfiguration
 @PropertySource(value = { "classpath:init-permissions-disabled.properties" })
-@Import(JWTPermissionsConfig.class)
+@Import(PermissionsConfig.class)
 @EntityScan(basePackageClasses = { PermissionModelWithoutPermissionNameField.class })
 public class NoPermissionModelNameFieldConfiguration {
 
