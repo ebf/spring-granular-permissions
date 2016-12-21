@@ -12,8 +12,9 @@ public class TestApplicationWithAuthorizedUser extends WebSecurityConfigurerAdap
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("user").password("user")
-                .authorities(new SimpleGrantedAuthority("test:request"));
+        auth.inMemoryAuthentication().withUser("test").password("test").roles("whatever").and().withUser("user")
+                .password("user")
+                .authorities(new SimpleGrantedAuthority("test:request"), new SimpleGrantedAuthority("models:findAll"));
     }
 
 }

@@ -37,7 +37,7 @@ public class PermissionAccessDecisionManager implements AccessDecisionManager {
 
     @Override
     public boolean supports(ConfigAttribute attribute) {
-        return ProtectedResourceSecurityAttribute.class.isAssignableFrom(attribute.getClass());
+        return PermissionSecurityAttribute.class.isAssignableFrom(attribute.getClass());
     }
 
     @Override

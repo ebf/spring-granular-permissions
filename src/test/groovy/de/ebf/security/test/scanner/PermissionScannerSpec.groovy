@@ -5,7 +5,7 @@ import org.springframework.test.context.ContextConfiguration
 
 import spock.lang.Specification
 import de.ebf.security.jwt.testapp.TestApplication
-import de.ebf.security.scanner.PermissionScanner;
+import de.ebf.security.scanner.PermissionScanner
 
 @ContextConfiguration(classes = TestApplication)
 class PermissionScannerSpec extends Specification{
@@ -19,7 +19,8 @@ class PermissionScannerSpec extends Specification{
         def permissions = permissionScanner.scan()
 
         then:
-        permissions.size() == 1
-        permissions[0].name == "test:request"
+        permissions.size() == 2
+        permissions.find { it.name == "test:request" }  != null
+        permissions.find { it.name == "models:findAll" } != null
     }
 }

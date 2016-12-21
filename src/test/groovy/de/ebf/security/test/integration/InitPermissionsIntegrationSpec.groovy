@@ -27,7 +27,8 @@ class InitPermissionsIntegrationSpec extends Specification {
         def models = query.getResultList()
 
         then:
-        models.size() == 1
-        models[0].name == "test:request"
+        models.size() == 2
+        models.find { it.name == "test:request" }  != null
+        models.find { it.name == "models:findAll" } != null
     }
 }

@@ -40,7 +40,8 @@ public class PermissionMetadataSource implements MethodSecurityMetadataSource {
         Method mostSpecificMethod = ClassUtils.getMostSpecificMethod(method, targetClass);
 
         boolean isLocalRepository = AnnotationUtils.findAnnotation(mostSpecificMethod.getDeclaringClass(),
-                ProtectedResource.class) != null;
+                ProtectedResource.class) != null
+                || AnnotationUtils.findAnnotation(targetClass, ProtectedResource.class) != null;
 
         if (!isLocalRepository) {
             return null;
@@ -49,7 +50,7 @@ public class PermissionMetadataSource implements MethodSecurityMetadataSource {
         logger.debug("Looking up security metadata attributes for: {} on {}", method.getName(),
                 targetClass.getSimpleName());
 
-        Permission authorize = AnnotationUtils.findAnnotation(method, Permission.class);
+        Permission authorize = AnnotationUtils.findAnnotation(mostSpecificMethod, Permission.class);
 
         if (authorize == null) {
             return null;
@@ -66,7 +67,7 @@ public class PermissionMetadataSource implements MethodSecurityMetadataSource {
 
         logger.info("System function detected: {}", systemFunctionName);
 
-        return Arrays.asList(new ProtectedResourceSecurityAttribute(systemFunctionName));
+        return Arrays.asList(new PermissionSecurityAttribute(systemFunctionName));
     }
 
 }
