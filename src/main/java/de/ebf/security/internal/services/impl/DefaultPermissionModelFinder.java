@@ -12,6 +12,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
+import org.springframework.context.ApplicationContext;
 
 import de.ebf.security.annotations.PermissionNameField;
 import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
@@ -30,7 +31,7 @@ import de.ebf.security.internal.services.PermissionModelFinder;
 public class DefaultPermissionModelFinder implements PermissionModelFinder {
 
     @Autowired
-    private EntityScanPackages entityScanPackages;
+    private ApplicationContext applicationContext;
 
     @Autowired
     private InterfaceBeanScanner permissionModelInterfaceBeanScanner;
@@ -40,7 +41,7 @@ public class DefaultPermissionModelFinder implements PermissionModelFinder {
             throws MoreThanOnePermissionModelFoundException, NoPermissionModelFoundException,
             NoPermissionFieldNameFoundException, MoreThanOnePermissionNameFieldFoundException {
 
-        List<String> packageNames = entityScanPackages.getPackageNames();
+        List<String> packageNames = EntityScanPackages.get(applicationContext).getPackageNames();
 
         Optional<Stream<BeanDefinition>> permissionModelBDs = packageNames.stream().map(packageName -> {
             return permissionModelInterfaceBeanScanner.findCandidateComponents(packageName).stream();
