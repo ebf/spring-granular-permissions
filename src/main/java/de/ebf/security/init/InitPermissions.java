@@ -48,7 +48,7 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
                     e);
 
             applicationContext.close();
-
+            applicationContext.stop();
             return;
         }
 

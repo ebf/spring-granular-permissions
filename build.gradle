@@ -4,7 +4,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.8
-version = '0.0.2'
+version = '0.0.3'
 jar {
     manifest {
         attributes 'Implementation-Title': 'JWT Permissions',
