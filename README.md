@@ -1,1 +1,1 @@
-# ebf-jwt-permissions
+# spring-granular-permissions
