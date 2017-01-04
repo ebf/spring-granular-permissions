@@ -23,7 +23,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-security:1.4.2.RELEASE")
     compile("org.springframework.data:spring-data-jpa:1.10.5.RELEASE")
     
-    compile("org.apache.openjpa:openjpa-persistence-jdbc:2.0.0") {
+    compile("org.apache.openjpa:openjpa-persistence-jdbc:2.4.1") {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: 'junit', module: 'junit'
     }
