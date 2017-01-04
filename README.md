@@ -25,6 +25,8 @@ This feature can also be disabled, which can be useful for test purposes.
 
 SGP plugs into your app, adds a spring security `AccessDecisionManager` and a `MethodSecurityMetadataSource` and enables global method security (Spring Boot feature).
 
+It checks the spring security provided `Authentiation` instance for sufficient permissions by invoking `Authentication#getAuthorities()`.
+
 ## What does it not do?
 
 SGP doesn't tell you what type of authentication to use or how your DB schema should look like. 
