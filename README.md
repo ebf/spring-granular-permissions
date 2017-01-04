@@ -126,7 +126,7 @@ That's it.
 
 ## Which errors/exceptions are thrown?
 
-Like with the [What does it do?]() section, this is split in the same two parts:
+Like with the [What does it do?](https://github.com/ebf/spring-granular-permissions#what-does-it-do) section, this is split in the same two parts:
 
 #### Permission gathering exceptions
 
@@ -157,3 +157,7 @@ They are all thrown at startup and will prevent your app from starting:
 Note:
 
 Spring Boot's autoconfiguration will make the rest resources respond with 403 Unauthorized  when `AccessDeniedException` is thrown.
+
+## Any more examples?
+
+A very dumb sample app can be found among in the [test code](https://github.com/ebf/spring-granular-permissions/tree/master/src/test/java/de/ebf/security/jwt/testapp).
