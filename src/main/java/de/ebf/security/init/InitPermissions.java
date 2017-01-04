@@ -89,7 +89,7 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
 
             Object permissionModelInstance = permissionModelOperations.construct(permissionModelDefinition, fun);
 
-            entityManager.persist(permissionModelInstance);
+            entityManager.merge(permissionModelInstance);
         });
 
     }
