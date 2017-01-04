@@ -4,7 +4,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 sourceCompatibility = 1.8
-version = '0.0.5'
+version = '0.0.6'
 jar {
     manifest {
         attributes 'Implementation-Title': 'JWT Permissions',
@@ -21,7 +21,12 @@ dependencies {
 
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
     compile("org.springframework.boot:spring-boot-starter-security:1.4.2.RELEASE")
-    compile("org.springframework.boot:spring-boot-starter-data-jpa:1.4.2.RELEASE")
+    compile("org.springframework.data:spring-data-jpa:1.10.5.RELEASE")
+    
+    compile("org.apache.openjpa:openjpa-persistence-jdbc:2.0.0") {
+        exclude group: 'commons-logging', module: 'commons-logging'
+        exclude group: 'junit', module: 'junit'
+    }
 
     testCompile("com.h2database:h2:1.4.191")
     testCompile 'org.springframework:spring-test:4.2.6.RELEASE'
@@ -33,6 +38,7 @@ dependencies {
     testCompile("org.springframework.boot:spring-boot-starter-web:1.4.2.RELEASE")
     testCompile("org.springframework.boot:spring-boot-starter-data-rest:1.4.2.RELEASE")
     testCompile("org.apache.httpcomponents:fluent-hc:4.5.1")
+    testCompile("org.springframework.boot:spring-boot-starter-data-jpa:1.4.2.RELEASE")
 }
 
 configurations { deployerJars }
@@ -42,9 +48,7 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
-artifacts {
-    archives sourcesJar
-}
+artifacts { archives sourcesJar }
 
 uploadArchives {
     repositories {
