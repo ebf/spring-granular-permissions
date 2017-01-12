@@ -31,6 +31,14 @@ repositories {
     mavenCentral()
 }
 
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+      tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+      }
+    }
+  }
+
 dependencies {
 
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
@@ -80,6 +88,9 @@ uploadArchives {
     repositories {
         mavenDeployer {
             configuration = configurations.deployerJars
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            
+            
             repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
                 authentication(userName: ossrhUsername, password: ossrhPassword)
             }
