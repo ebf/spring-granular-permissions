@@ -160,4 +160,4 @@ Spring Boot's autoconfiguration will make the rest resources respond with 403 Un
 
 ## Any more examples?
 
-A very dumb sample app can be found among in the [test code](https://github.com/ebf/spring-granular-permissions/tree/master/src/test/java/de/ebf/security/jwt/testapp).
+A very dumb sample app can be found in [test code](https://github.com/ebf/spring-granular-permissions/tree/master/src/test/java/de/ebf/security/jwt/testapp).
