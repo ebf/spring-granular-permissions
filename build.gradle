@@ -1,5 +1,7 @@
 buildscript {
-    repositories { maven { url "https://plugins.gradle.org/m2/" } }
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
     dependencies { classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1" }
 }
 
@@ -8,9 +10,15 @@ apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: "com.github.hierynomus.license"
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility = 1.8
-version = '0.0.7'
+
+group = "de.ebf"
+archivesBaseName = "spring-granular-permissions"
+version = "1.0.0"
+
 jar {
     manifest {
         attributes 'Implementation-Title': 'JWT Permissions',
@@ -54,24 +62,58 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
 license {
     header = file('header.txt')
     exclude "LICENSE.txt"
 }
 
-artifacts { archives sourcesJar }
+signing { sign configurations.archives }
+
+artifacts { archives sourcesJar,javadocJar }
 
 uploadArchives {
     repositories {
         mavenDeployer {
             configuration = configurations.deployerJars
-            repository(url: 'http://repository.dev.ebf.de/nexus/content/repositories/releases') {
-                authentication(userName: "deployment", password: "ebf4ever")
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
             }
-            pom.groupId = 'de.ebf'
-            pom.artifactId = 'spring-granular-permissions'
-            pom.version = rootProject.version
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+            pom.project {
+                name 'Spring Granular Permissions'
+                packaging 'jar'
+                description "Granular permission library for spring boot"
+                url 'https://github.com/ebf/spring-granular-permissions.git'
+
+                scm {
+                    connection 'scm:git:https://github.com/ebf/spring-granular-permissions.git'
+                    developerConnection 'scm:git:https://github.com/ebf/spring-granular-permissions.git'
+                    url 'https://github.com/ebf/spring-granular-permissions.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'iznenad'
+                        name 'Nenad Nikolic'
+                        email 'nenad.nikolic@ebf.de'
+                    }
+                }
+            }
         }
     }
 }
-
