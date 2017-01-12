@@ -43,7 +43,7 @@ Also, the app will fail to start if no transaction manager is configured.
 ## How do I configure all this?
 
 - add the SGP dependency
-	- gradle: `compile("de.ebf:spring-granular-permissions:0.0.7")`
+	- gradle: `compile("de.ebf:spring-granular-permissions:1.0.0")`
 	
 	- maven:
 
@@ -51,7 +51,7 @@ Also, the app will fail to start if no transaction manager is configured.
 	<dependency>
 		<groupId>de.ebf</groupId>
 		<artifactId>spring-granular-permissions</artifactId>
-		<version>0.0.7</version>
+		<version>1.0.0</version>
 	</dependency>
 	```
 
