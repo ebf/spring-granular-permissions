@@ -35,7 +35,7 @@ It's up to you to provide the other pieces of the app that make use of the permi
 
 ## Are there any preconditions?
 
-Yes, in order to store the `Permissions` at app startup SGP needs the `EntityManager` bean to be available.
+Yes, in order to store the `Permissions` at app startup SGP needs the `EntityManager` bean to be available and the `@EntityScan` annotation to be configured correctly.
 
 Also, the app will fail to start if no transaction manager is configured.
 
@@ -55,13 +55,13 @@ Also, the app will fail to start if no transaction manager is configured.
 	</dependency>
 	```
 
-- import the `PermissionsConfig`
+- make sure the `@EntityScan` annotation is present in your DB configuration and points to the package(s) of your DB models.
 
 ```java
 @Configuration
-@Import({ PermissionsConfig.class })
-public class MyConfiguration {
-
+@EntityScan(basePackageClasses = { BaseModel.class })
+public class MyDbConfiguration{
+  
 }
 ```
 
@@ -88,19 +88,20 @@ public class Model {
 }
 ```
 
-- configure the scanner
+- configure SGP by importing the `PermissionConfig.class` and telling the `PermissionScanner` where to scan for resources and permissions
 
 ```java
 import de.ebf.security.scanner.DefaultPermissionScanner;
 import de.ebf.security.scanner.PermissionScanner;
 
 @Configuration
-public class ScannerConfiguration {
+@Import({ PermissionsConfig.class })
+public class SGPConfiguration {
     @Bean
     public PermissionScanner permissionScanner() {
         DefaultPermissionScanner defaultPermissionScanner = new DefaultPermissionScanner();
         //tell the permission scanner where to scan for protected resources and permissions
-        defaultPermissionScanner.setBasePackage("com.example.app");
+        defaultPermissionScanner.setBasePackage(getClass().getPackage().getName());
         return defaultPermissionScanner;
     }
 }
