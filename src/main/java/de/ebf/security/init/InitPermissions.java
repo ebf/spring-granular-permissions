@@ -95,10 +95,8 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
         permissions.forEach(fun -> {
             logger.info("Registering permission: {}", fun.getName());
 
-            if (existingPermissions.stream().anyMatch(existingFunction -> {
-                return existingFunction.getName().equals(fun);
-            })) {
-                logger.info("Permission {} already exists.", fun);
+            if (existingPermissions.stream().anyMatch(existingFunction -> existingFunction.getName().equals(fun.getName()))) {
+                logger.info("Permission {} already exists.", fun.getName());
                 return;
             }
 
