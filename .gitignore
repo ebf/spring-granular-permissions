@@ -5,3 +5,5 @@
 .gradle/
 .project
 .settings/
+.idea/*
+*.iml
