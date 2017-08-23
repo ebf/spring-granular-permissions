@@ -45,7 +45,7 @@ public class PermissionAccessDecisionManager implements AccessDecisionManager {
         });
 
         if (accessableAttributes.count() == 0) {
-            throw new AccessDeniedException("Insuficient permissions.");
+            throw new AccessDeniedException("Insufficient permissions.");
         }
 
     }
