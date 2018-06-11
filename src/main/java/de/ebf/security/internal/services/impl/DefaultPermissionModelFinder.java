@@ -1,12 +1,12 @@
 /**
  * Copyright 2009-2017 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,20 +14,6 @@
  * limitations under the License.
  */
 package de.ebf.security.internal.services.impl;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.commons.lang3.reflect.ConstructorUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
-import org.springframework.context.ApplicationContext;
 
 import de.ebf.security.annotations.PermissionNameField;
 import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
@@ -37,11 +23,24 @@ import de.ebf.security.exceptions.NoPermissionModelFoundException;
 import de.ebf.security.internal.data.DefaultPermissionModelDefinition;
 import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.services.PermissionModelFinder;
+import org.apache.commons.lang3.reflect.ConstructorUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
+import org.springframework.context.ApplicationContext;
+
+import javax.persistence.EntityManager;
+import javax.persistence.metamodel.ManagedType;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
  */
 public class DefaultPermissionModelFinder implements PermissionModelFinder {
 
@@ -78,28 +77,32 @@ public class DefaultPermissionModelFinder implements PermissionModelFinder {
 
         BeanDefinition beanDefinition = permissionModelBDList.get(0);
 
-        try {
-            Class<?> permissionModelClass = Class.forName(beanDefinition.getBeanClassName());
-
-            List<Field> permissionNameFields = FieldUtils.getFieldsListWithAnnotation(permissionModelClass,
-                    PermissionNameField.class);
-
-            if (permissionNameFields.isEmpty()) {
-                throw new NoPermissionFieldNameFoundException();
+        EntityManager entityManager = applicationContext.getBean(EntityManager.class);
+        Class<?> permissionModelClass = null;
+        for (ManagedType<?> managedType : entityManager.getMetamodel().getManagedTypes()) {
+            if (managedType.getJavaType().getName().equals(beanDefinition.getBeanClassName())) {
+                permissionModelClass = managedType.getJavaType();
+                break;
             }
-
-            if (permissionNameFields.size() > 1) {
-                throw new MoreThanOnePermissionNameFieldFoundException();
-            }
-
-            Field permissionNameField = permissionNameFields.get(0);
-
-            Constructor<?> defaultConstructor = ConstructorUtils.getMatchingAccessibleConstructor(permissionModelClass);
-
-            return new DefaultPermissionModelDefinition(permissionModelClass, permissionNameField, defaultConstructor);
-        } catch (ClassNotFoundException e) {
-            throw new NoPermissionModelFoundException(e);
         }
+        if (permissionModelClass == null) {
+            throw new NoPermissionModelFoundException();
+        }
+        List<Field> permissionNameFields = FieldUtils.getFieldsListWithAnnotation(permissionModelClass, PermissionNameField.class);
+
+        if (permissionNameFields.isEmpty()) {
+            throw new NoPermissionFieldNameFoundException();
+        }
+
+        if (permissionNameFields.size() > 1) {
+            throw new MoreThanOnePermissionNameFieldFoundException();
+        }
+
+        Field permissionNameField = permissionNameFields.get(0);
+
+        Constructor<?> defaultConstructor = ConstructorUtils.getMatchingAccessibleConstructor(permissionModelClass);
+
+        return new DefaultPermissionModelDefinition(permissionModelClass, permissionNameField, defaultConstructor);
 
     }
 
