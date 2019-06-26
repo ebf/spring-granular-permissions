@@ -51,7 +51,7 @@ Also, the app will fail to start if no transaction manager is configured.
 	<dependency>
 		<groupId>de.ebf</groupId>
 		<artifactId>spring-granular-permissions</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.2</version>
 	</dependency>
 	```
 
