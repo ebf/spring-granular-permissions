@@ -1,12 +1,12 @@
 /**
  * Copyright 2009-2017 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,69 +15,53 @@
  */
 package de.ebf.security.init;
 
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.core.Ordered;
-import org.springframework.transaction.annotation.Transactional;
-
-import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
-import de.ebf.security.exceptions.MoreThanOnePermissionNameFieldFoundException;
-import de.ebf.security.exceptions.NoPermissionFieldNameFoundException;
-import de.ebf.security.exceptions.NoPermissionModelFoundException;
 import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.permission.BasicPermission;
 import de.ebf.security.internal.permission.InternalPermission;
 import de.ebf.security.internal.services.PermissionModelFinder;
 import de.ebf.security.internal.services.PermissionModelOperations;
+import de.ebf.security.repository.PermissionModelRepository;
 import de.ebf.security.scanner.PermissionScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
 
-@Transactional
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 public class InitPermissions implements ApplicationListener<ContextRefreshedEvent>, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(InitPermissions.class);
 
+    private PermissionModelFinder permissionModelFinder;
+    private PermissionModelDefinition permissionModelDefinition;
+    private PermissionModelRepository permissionModelRepository;
+    private PermissionScanner permissionScanner;
+    private PermissionModelOperations permissionModelOperations;
+
+    public InitPermissions(PermissionModelFinder permissionModelFinder,
+                           PermissionModelDefinition permissionModelDefinition,
+                           PermissionModelRepository permissionModelRepository,
+                           PermissionScanner permissionScanner,
+                           PermissionModelOperations permissionModelOperations) {
+        this.permissionModelDefinition = permissionModelDefinition;
+        this.permissionModelFinder = permissionModelFinder;
+        this.permissionModelRepository = permissionModelRepository;
+        this.permissionScanner = permissionScanner;
+        this.permissionModelOperations = permissionModelOperations;
+    }
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        ConfigurableApplicationContext applicationContext = (ConfigurableApplicationContext) event
-                .getApplicationContext();
-
-        PermissionModelFinder permissionModelFinder = applicationContext.getBean(PermissionModelFinder.class);
-
-        PermissionModelDefinition permissionModelDefinition;
-        try {
-            permissionModelDefinition = permissionModelFinder.find();
-        } catch (MoreThanOnePermissionModelFoundException | NoPermissionModelFoundException
-                | NoPermissionFieldNameFoundException | MoreThanOnePermissionNameFieldFoundException e) {
-            logger.error("Permission model not well defined, cannot store permissions. Permission system won't work.",
-                    e);
-
-            applicationContext.close();
-            applicationContext.stop();
-            return;
-        }
-
-        PermissionScanner permissionScanner = applicationContext.getBean(PermissionScanner.class);
-        EntityManager entityManager = applicationContext.getBean(EntityManager.class);
-        PermissionModelOperations permissionModelOperations = applicationContext
-                .getBean(PermissionModelOperations.class);
 
         Set<InternalPermission> permissions = permissionScanner.scan();
 
-        CriteriaQuery selectAll = entityManager.getCriteriaBuilder()
-                .createQuery(permissionModelDefinition.getPermissionModelClass());
-        selectAll.select(selectAll.from(permissionModelDefinition.getPermissionModelClass()));
-        List<Object> existingPermissionRecords = entityManager.createQuery(selectAll).getResultList();
+        List<Object> existingPermissionRecords = permissionModelRepository.findAllPermissionModels();
 
         Set<InternalPermission> existingPermissions = existingPermissionRecords.stream()
                 .map(new Function<Object, InternalPermission>() {
@@ -91,7 +75,7 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
 
                     }
                 }).collect(Collectors.toSet());
-
+        List<Object> permissionModelInstances = new ArrayList<>();
         permissions.forEach(fun -> {
             logger.info("Registering permission: {}", fun.getName());
 
@@ -102,8 +86,9 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
 
             Object permissionModelInstance = permissionModelOperations.construct(permissionModelDefinition, fun);
 
-            entityManager.merge(permissionModelInstance);
+            permissionModelInstances.add(permissionModelInstance);
         });
+        permissionModelRepository.saveAllPermissionModels(permissionModelInstances);
 
     }
 
