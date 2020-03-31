@@ -15,35 +15,31 @@
  */
 package de.ebf.security;
 
-import de.ebf.security.annotations.PermissionScan;
+import de.ebf.security.annotations.PermissionModel;
+import de.ebf.security.annotations.ProtectedResource;
 import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
 import de.ebf.security.exceptions.MoreThanOnePermissionNameFieldFoundException;
 import de.ebf.security.exceptions.NoPermissionFieldNameFoundException;
 import de.ebf.security.exceptions.NoPermissionModelFoundException;
-import de.ebf.security.internal.data.PermissionModelDefinition;
-import de.ebf.security.repository.DefaultPermissionModelRepository;
-import de.ebf.security.repository.DefaultPermissionModelRepositoryDisable;
-import de.ebf.security.repository.PermissionModelRepository;
-import de.ebf.security.scanner.DefaultPermissionScanner;
-import de.ebf.security.scanner.PermissionScanner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-
-import de.ebf.security.annotations.PermissionModel;
-import de.ebf.security.annotations.ProtectedResource;
 import de.ebf.security.init.InitPermissions;
-import de.ebf.security.internal.conditional.InitPermissionsDisable;
+import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.services.PermissionModelFinder;
 import de.ebf.security.internal.services.PermissionModelOperations;
 import de.ebf.security.internal.services.impl.DefaultPermissionModelFinder;
 import de.ebf.security.internal.services.impl.InterfaceBeanScanner;
 import de.ebf.security.internal.services.impl.ReflectivePermissionModelOperations;
+import de.ebf.security.repository.DefaultPermissionModelRepository;
+import de.ebf.security.repository.PermissionModelRepository;
+import de.ebf.security.scanner.PermissionScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 
 import javax.persistence.EntityManager;
 
@@ -80,23 +76,18 @@ public class PermissionsConfig {
     }
 
     @Bean
-    public PermissionScanner permissionScanner() {
-        return new DefaultPermissionScanner();
-    }
-
-    @Bean
     public PermissionModelDefinition permissionModelDefinition(@Autowired PermissionModelFinder permissionModelFinder) {
         try {
             return permissionModelFinder.find();
         } catch (MoreThanOnePermissionModelFoundException | NoPermissionModelFoundException
                 | NoPermissionFieldNameFoundException | MoreThanOnePermissionNameFieldFoundException e) {
-            logger.error("Permission model not well defined, cannot store permissions. Permission system won't work.",
-                    e);
-            return null;
+            String errorMessage = "Permission model not well defined, cannot store permissions. Permission system won't work.";
+            logger.error(errorMessage, e);
+            throw new FatalBeanException(errorMessage);
         }
     }
 
-    @Conditional(DefaultPermissionModelRepositoryDisable.class)
+    @ConditionalOnProperty(name = "default.permission.model.disable", havingValue="false", matchIfMissing = true)
     @Bean
     public DefaultPermissionModelRepository defaultPermissionModelRepository(@Autowired EntityManager entityManager,
                                                                              @Autowired PermissionModelDefinition permissionModelDefinition) {
@@ -104,7 +95,7 @@ public class PermissionsConfig {
     }
 
 
-    @Conditional(InitPermissionsDisable.class)
+    @ConditionalOnProperty(name = "init.permissions.disable", havingValue="false", matchIfMissing = true)
     @Bean
     public InitPermissions initPermissions(@Autowired PermissionModelFinder permissionModelFinder,
                                            @Autowired PermissionModelDefinition permissionModelDefinition,
