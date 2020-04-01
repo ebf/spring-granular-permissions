@@ -11,13 +11,12 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: "com.github.hierynomus.license"
 apply plugin: 'maven'
-apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
 group = "de.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "1.0.3"
+version = "1.0.2"
 
 jar {
     manifest {
@@ -29,8 +28,6 @@ jar {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven { url = uri("http://repository.dev.ebf.de/nexus/repository/releases/") }
-    maven { url = uri("http://repository.dev.ebf.de/nexus/repository/snapshots/") }
 }
 
 if (JavaVersion.current().isJava8Compatible()) {
@@ -82,3 +79,46 @@ license {
 }
 
 artifacts { archives sourcesJar,javadocJar }
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            configuration = configurations.deployerJars
+
+            repository(url: "http://repository.dev.ebf.de/nexus/repository/releases") {
+                authentication(userName: nexus_user, password: nexus_pass)
+            }
+
+            snapshotRepository(url: "http://repository.dev.ebf.de/nexus/repository/snapshots") {
+                authentication(userName: nexus_user, password: nexus_pass)
+            }
+            pom.project {
+                name 'Spring Granular Permissions'
+                packaging 'jar'
+                description "Granular permission library for spring boot"
+                url 'https://github.com/ebf/spring-granular-permissions.git'
+
+                scm {
+                    connection 'scm:git:https://github.com/ebf/spring-granular-permissions.git'
+                    developerConnection 'scm:git:https://github.com/ebf/spring-granular-permissions.git'
+                    url 'https://github.com/ebf/spring-granular-permissions.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'iznenad'
+                        name 'Nenad Nikolic'
+                        email 'nenad.nikolic@ebf.de'
+                    }
+                }
+            }
+        }
+    }
+}

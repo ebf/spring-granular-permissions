@@ -15,9 +15,11 @@ pipeline {
           echo '----------------------------------------------------------------------------------------'
           echo 'Building Backend...'
           echo '----------------------------------------------------------------------------------------'
-          withCredentials([usernamePassword(credentialsId: 'ossr_credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+          withCredentials([usernamePassword(credentialsId: 'nexus-maven-ebf-releases-deployment',
+                                                          usernameVariable: 'USER',
+                                                          passwordVariable: 'PASS')]) {
             sh """
-              gradle clean build -PossrhUsername=$USER -PossrhPassword=$PASS
+              gradle clean build -Pnexus_user=$USER -Pnexus_pass=$PASS"
             """
           }
       }
@@ -41,7 +43,7 @@ pipeline {
               echo 'Publish Archives'
               echo '----------------------------------------------------------------------------------------'
 
-              sh "gradle publish -Pnexus_user=$USER -Pnexus_pass=$PASS"
+              sh "gradle uploadArchives -Pnexus_user=$USER -Pnexus_pass=$PASS"
           }
       }
     }
