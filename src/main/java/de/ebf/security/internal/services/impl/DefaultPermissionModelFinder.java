@@ -72,7 +72,7 @@ public class DefaultPermissionModelFinder implements PermissionModelFinder {
         }
 
         if (permissionModelBDList.size() > 1) {
-            throw new MoreThanOnePermissionModelFoundException();
+            throw new MoreThanOnePermissionModelFoundException(permissionModelBDList);
         }
 
         BeanDefinition beanDefinition = permissionModelBDList.get(0);

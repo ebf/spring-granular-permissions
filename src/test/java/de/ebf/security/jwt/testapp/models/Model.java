@@ -15,6 +15,7 @@
  */
 package de.ebf.security.jwt.testapp.models;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -29,6 +30,24 @@ public class Model {
     @PermissionNameField
     private String name;
 
+    @Column
+    private long timestamp;
+
     private int wrongTypeField;
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 }

@@ -32,11 +32,10 @@ import de.ebf.security.repository.DefaultPermissionModelRepository;
 import de.ebf.security.repository.PermissionModelRepository;
 import de.ebf.security.scanner.DefaultPermissionScanner;
 import de.ebf.security.scanner.PermissionScanner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -47,8 +46,6 @@ import javax.persistence.EntityManager;
 @Configuration
 @Import({MethodSecurityConfiguration.class})
 public class PermissionsConfig {
-
-    private static final Logger logger = LoggerFactory.getLogger(PermissionsConfig.class);
 
     @Bean
     public PermissionModelFinder permissionModelFinder() {
@@ -63,7 +60,6 @@ public class PermissionsConfig {
     @Bean
     public InterfaceBeanScanner permissionModelInterfaceBeanScanner() {
         InterfaceBeanScanner interfaceBeanScanner = new InterfaceBeanScanner();
-
         interfaceBeanScanner.addIncludeFilter(new AnnotationTypeFilter(PermissionModel.class));
         return interfaceBeanScanner;
     }
@@ -71,7 +67,6 @@ public class PermissionsConfig {
     @Bean
     public InterfaceBeanScanner protectedResourceInterfaceBeanScanner() {
         InterfaceBeanScanner interfaceBeanScanner = new InterfaceBeanScanner();
-
         interfaceBeanScanner.addIncludeFilter(new AnnotationTypeFilter(ProtectedResource.class));
         return interfaceBeanScanner;
     }
@@ -80,34 +75,41 @@ public class PermissionsConfig {
     public PermissionModelDefinition permissionModelDefinition(@Autowired PermissionModelFinder permissionModelFinder) {
         try {
             return permissionModelFinder.find();
-        } catch (MoreThanOnePermissionModelFoundException | NoPermissionModelFoundException
-                | NoPermissionFieldNameFoundException | MoreThanOnePermissionNameFieldFoundException e) {
-            String errorMessage = "Permission model not well defined, cannot store permissions. Permission system won't work.";
-            logger.error(errorMessage, e);
-            throw new FatalBeanException(errorMessage);
+        } catch (NoPermissionModelFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "You need to define at least class with a @PermissionModel annotation", e);
+        } catch (MoreThanOnePermissionModelFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "More than one Permission Model was found in classpath: " + e.getClassNames(), e);
+        } catch (NoPermissionFieldNameFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "You need to annotate one field on your Permission Model with @PermissionNameField", e);
+        } catch (MoreThanOnePermissionNameFieldFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "You can not annotate more than one field on your Permission Model with @PermissionNameField", e);
         }
     }
 
-    @ConditionalOnProperty(name = "default.permission.model.disable", havingValue="false", matchIfMissing = true)
     @Bean
-    public DefaultPermissionModelRepository defaultPermissionModelRepository(@Autowired EntityManager entityManager,
-                                                                             @Autowired PermissionModelDefinition permissionModelDefinition) {
+    @ConditionalOnMissingBean(PermissionModelRepository.class)
+    public DefaultPermissionModelRepository defaultPermissionModelRepository(
+            EntityManager entityManager, PermissionModelDefinition permissionModelDefinition
+    ) {
         return new DefaultPermissionModelRepository(entityManager, permissionModelDefinition);
     }
 
-    @ConditionalOnProperty(name = "default.permission.scanner.override", havingValue="false", matchIfMissing = true)
     @Bean
-    public DefaultPermissionScanner permissionScanner() {
+    @ConditionalOnMissingBean(PermissionScanner.class)
+    public DefaultPermissionScanner defaultPermissionScanner() {
         return new DefaultPermissionScanner();
     }
 
-
-    @ConditionalOnProperty(name = "init.permissions.disable", havingValue="false", matchIfMissing = true)
     @Bean
-    public InitPermissions initPermissions(@Autowired PermissionModelDefinition permissionModelDefinition,
-                                           @Autowired PermissionModelRepository permissionModelRepository,
-                                           @Autowired PermissionScanner permissionScanner,
-                                           @Autowired PermissionModelOperations permissionModelOperations) {
+    @ConditionalOnBean(PermissionModelRepository.class)
+    public InitPermissions initPermissions(PermissionModelDefinition permissionModelDefinition,
+                                           PermissionModelRepository permissionModelRepository,
+                                           PermissionScanner permissionScanner,
+                                           PermissionModelOperations permissionModelOperations) {
         return new InitPermissions(permissionModelDefinition,
                 permissionModelRepository, permissionScanner, permissionModelOperations);
     }

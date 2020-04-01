@@ -30,7 +30,6 @@ import org.springframework.core.Ordered;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InitPermissions implements ApplicationListener<ContextRefreshedEvent>, Ordered {
@@ -54,45 +53,52 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        final Set<InternalPermission> declaredPermissions = permissionScanner.scan();
+        final Set<InternalPermission> existingPermissions = findExistingPermissions();
 
-        Set<InternalPermission> declaredPermissions = permissionScanner.scan();
+        logger.debug("Found existing permissions from Repository {}", existingPermissions);
 
-        List<Object> existingPermissionRecords = permissionModelRepository.findAllPermissionModels();
+        final List<Object> permissionModelInstances = new ArrayList<>();
 
-        Set<InternalPermission> existingPermissions = existingPermissionRecords.stream()
-                .map(new Function<Object, InternalPermission>() {
-                    @Override
-                    public InternalPermission apply(Object permissionRecord) {
+        declaredPermissions.forEach(permission -> {
+            logger.info("Registering permission: {}", permission.getName());
 
-                        String permissionName = permissionModelOperations.getName(permissionModelDefinition,
-                                permissionRecord);
-
-                        return new BasicPermission(permissionName);
-
-                    }
-                }).collect(Collectors.toSet());
-        List<Object> permissionModelInstances = new ArrayList<>();
-        declaredPermissions.forEach(declaredPermission -> {
-            logger.info("Registering permission: {}", declaredPermission.getName());
-
-            if (existingPermissions.stream().anyMatch(existingFunction ->
-                    existingFunction.getName().equals(declaredPermission.getName()))) {
-                logger.info("Permission {} already exists.", declaredPermission.getName());
+            if (exists(permission, existingPermissions)) {
+                logger.info("Permission {} already exists.", permission.getName());
                 return;
             }
 
-            Object permissionModelInstance =
-                    permissionModelOperations.construct(permissionModelDefinition, declaredPermission);
+            final Object model = permissionModelOperations.construct(permissionModelDefinition, permission);
 
-            permissionModelInstances.add(permissionModelInstance);
+            logger.debug("Constructed {} from {}", model, permission);
+
+            permissionModelInstances.add(model);
         });
-        permissionModelRepository.saveAllPermissionModels(permissionModelInstances);
 
+        permissionModelRepository.saveAllPermissionModels(permissionModelInstances);
     }
 
     @Override
     public int getOrder() {
         return 0;
+    }
+
+    private Set<InternalPermission> findExistingPermissions() {
+        final List<Object> models = permissionModelRepository.findAllPermissionModels();
+
+        return models.stream()
+                .map(this::toInternalPermission)
+                .collect(Collectors.toSet());
+    }
+
+    private InternalPermission toInternalPermission(Object value) {
+        final String permissionName = permissionModelOperations.getName(permissionModelDefinition, value);
+        logger.debug("Converting an {} to an Internal Permission with name: {}", value, permissionName);
+        return new BasicPermission(permissionName);
+    }
+
+    private boolean exists(InternalPermission candidate, Set<InternalPermission> existing) {
+        return existing.stream().anyMatch(permission -> candidate.getName().equals(permission.getName()));
     }
 
 }
