@@ -11,6 +11,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: "com.github.hierynomus.license"
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 sourceCompatibility = 1.8
 
