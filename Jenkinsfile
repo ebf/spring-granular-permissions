@@ -26,9 +26,8 @@ pipeline {
     stage('Publish Archives') {
       agent {
           docker {
-              image 'ebfdev/openjdk:13-jdk-alpine'
-              args '-u root:root'
-              reuseNode true
+            image 'gradle:4.10.2-jdk8-slim'
+            reuseNode true
           }
       }
 
