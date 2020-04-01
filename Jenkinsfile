@@ -15,9 +15,11 @@ pipeline {
           echo '----------------------------------------------------------------------------------------'
           echo 'Building Backend...'
           echo '----------------------------------------------------------------------------------------'
-          sh """
-            gradle clean build
-          """
+          withCredentials([usernamePassword(credentialsId: 'ossr_credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+            sh """
+              gradle clean build -PossrhUsername=$USER -PossrhPassword=$PASS
+            """
+          }
       }
     }
 
