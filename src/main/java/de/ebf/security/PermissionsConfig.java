@@ -30,6 +30,7 @@ import de.ebf.security.internal.services.impl.InterfaceBeanScanner;
 import de.ebf.security.internal.services.impl.ReflectivePermissionModelOperations;
 import de.ebf.security.repository.DefaultPermissionModelRepository;
 import de.ebf.security.repository.PermissionModelRepository;
+import de.ebf.security.scanner.DefaultPermissionScanner;
 import de.ebf.security.scanner.PermissionScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,15 +95,20 @@ public class PermissionsConfig {
         return new DefaultPermissionModelRepository(entityManager, permissionModelDefinition);
     }
 
+    @ConditionalOnProperty(name = "default.permission.scanner.override", havingValue="false", matchIfMissing = true)
+    @Bean
+    public DefaultPermissionScanner permissionScanner() {
+        return new DefaultPermissionScanner();
+    }
+
 
     @ConditionalOnProperty(name = "init.permissions.disable", havingValue="false", matchIfMissing = true)
     @Bean
-    public InitPermissions initPermissions(@Autowired PermissionModelFinder permissionModelFinder,
-                                           @Autowired PermissionModelDefinition permissionModelDefinition,
+    public InitPermissions initPermissions(@Autowired PermissionModelDefinition permissionModelDefinition,
                                            @Autowired PermissionModelRepository permissionModelRepository,
                                            @Autowired PermissionScanner permissionScanner,
                                            @Autowired PermissionModelOperations permissionModelOperations) {
-        return new InitPermissions(permissionModelFinder, permissionModelDefinition,
+        return new InitPermissions(permissionModelDefinition,
                 permissionModelRepository, permissionScanner, permissionModelOperations);
     }
 

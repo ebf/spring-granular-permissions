@@ -18,7 +18,6 @@ package de.ebf.security.init;
 import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.permission.BasicPermission;
 import de.ebf.security.internal.permission.InternalPermission;
-import de.ebf.security.internal.services.PermissionModelFinder;
 import de.ebf.security.internal.services.PermissionModelOperations;
 import de.ebf.security.repository.PermissionModelRepository;
 import de.ebf.security.scanner.PermissionScanner;
@@ -38,19 +37,16 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
 
     private static final Logger logger = LoggerFactory.getLogger(InitPermissions.class);
 
-    private PermissionModelFinder permissionModelFinder;
     private PermissionModelDefinition permissionModelDefinition;
     private PermissionModelRepository permissionModelRepository;
     private PermissionScanner permissionScanner;
     private PermissionModelOperations permissionModelOperations;
 
-    public InitPermissions(PermissionModelFinder permissionModelFinder,
-                           PermissionModelDefinition permissionModelDefinition,
+    public InitPermissions(PermissionModelDefinition permissionModelDefinition,
                            PermissionModelRepository permissionModelRepository,
                            PermissionScanner permissionScanner,
                            PermissionModelOperations permissionModelOperations) {
         this.permissionModelDefinition = permissionModelDefinition;
-        this.permissionModelFinder = permissionModelFinder;
         this.permissionModelRepository = permissionModelRepository;
         this.permissionScanner = permissionScanner;
         this.permissionModelOperations = permissionModelOperations;
@@ -59,7 +55,7 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        Set<InternalPermission> permissions = permissionScanner.scan();
+        Set<InternalPermission> declaredPermissions = permissionScanner.scan();
 
         List<Object> existingPermissionRecords = permissionModelRepository.findAllPermissionModels();
 
@@ -76,15 +72,17 @@ public class InitPermissions implements ApplicationListener<ContextRefreshedEven
                     }
                 }).collect(Collectors.toSet());
         List<Object> permissionModelInstances = new ArrayList<>();
-        permissions.forEach(fun -> {
-            logger.info("Registering permission: {}", fun.getName());
+        declaredPermissions.forEach(declaredPermission -> {
+            logger.info("Registering permission: {}", declaredPermission.getName());
 
-            if (existingPermissions.stream().anyMatch(existingFunction -> existingFunction.getName().equals(fun.getName()))) {
-                logger.info("Permission {} already exists.", fun.getName());
+            if (existingPermissions.stream().anyMatch(existingFunction ->
+                    existingFunction.getName().equals(declaredPermission.getName()))) {
+                logger.info("Permission {} already exists.", declaredPermission.getName());
                 return;
             }
 
-            Object permissionModelInstance = permissionModelOperations.construct(permissionModelDefinition, fun);
+            Object permissionModelInstance =
+                    permissionModelOperations.construct(permissionModelDefinition, declaredPermission);
 
             permissionModelInstances.add(permissionModelInstance);
         });
