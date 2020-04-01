@@ -15,6 +15,8 @@
  */
 package de.ebf.security.test.integration
 
+import spock.lang.Ignore
+
 import javax.persistence.EntityManager
 import javax.persistence.TypedQuery
 
@@ -28,6 +30,7 @@ import de.ebf.security.jwt.testapp.models.Model
 
 
 @ContextConfiguration(classes = TestApplication)
+@Ignore
 class InitPermissionsIntegrationSpec extends Specification {
 
     @Autowired
