@@ -14,7 +14,6 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: 'ossr_credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           sh """
-            cd spring-granular-permissions/
             gradle clean build uploadArchives -PossrUsername=$USER -PossrPassword=$PASS
           """
         }
