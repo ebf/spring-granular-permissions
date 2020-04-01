@@ -14,7 +14,7 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: 'ossr_credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
           sh """
-            gradle clean build uploadArchives -PossrUsername=$USER -PossrPassword=$PASS
+            gradle clean build uploadArchives -PossrhUsername=$USER -PossrhPassword=$PASS
           """
         }
       }
