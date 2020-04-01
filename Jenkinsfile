@@ -4,7 +4,7 @@ pipeline {
   }
 
   stages {
-    stage('Build') {
+    stage('Gradle Build and Test') {
       agent {
         docker {
           image 'gradle:4.10.2-jdk8-slim'
@@ -12,11 +12,36 @@ pipeline {
         }
       }
       steps {
-        withCredentials([usernamePassword(credentialsId: 'ossr_credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+          echo '----------------------------------------------------------------------------------------'
+          echo 'Building Backend...'
+          echo '----------------------------------------------------------------------------------------'
           sh """
-            gradle clean build uploadArchives -PossrhUsername=$USER -PossrhPassword=$PASS
+            gradle clean build
           """
-        }
+      }
+    }
+
+    stage('Publish Archives') {
+      agent {
+          docker {
+              image 'ebfdev/openjdk:13-jdk-alpine'
+              args '-u root:root'
+              reuseNode true
+          }
+      }
+
+      steps {
+          withCredentials([usernamePassword(
+              credentialsId: 'nexus-maven-ebf-releases-deployment',
+              usernameVariable: 'USER',
+              passwordVariable: 'PASS'
+          )]) {
+              echo '----------------------------------------------------------------------------------------'
+              echo 'Publish Archives'
+              echo '----------------------------------------------------------------------------------------'
+
+              sh "gradle publish -Pnexus_user=$USER -Pnexus_pass=$PASS"
+          }
       }
     }
   }
