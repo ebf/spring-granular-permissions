@@ -19,10 +19,12 @@ import de.ebf.security.jwt.testapp.TestApplicationWithCustomRepository
 import de.ebf.security.jwt.testapp.TestApplicationWithJpaRepositories
 import groovy.json.JsonSlurper
 import org.apache.http.client.fluent.Request
+import spock.lang.Ignore
 import org.springframework.boot.SpringApplication
 import spock.lang.Shared
 import spock.lang.Specification
 
+@Ignore
 class CustomRepositoryMethodSecuritySpec extends Specification {
 
     @Shared

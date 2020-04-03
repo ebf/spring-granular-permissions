@@ -19,11 +19,12 @@ package de.ebf.security.test.integration
 
 import org.apache.http.client.fluent.Request
 import org.springframework.boot.SpringApplication
-
+import spock.lang.Ignore
 import spock.lang.Specification
 import de.ebf.security.jwt.testapp.TestApplication
 import de.ebf.security.jwt.testapp.TestApplicationWithAuthorizedUser
 
+@Ignore
 class MethodSecuritySpec extends Specification {
 
     def "http request to / should result in 403" () {

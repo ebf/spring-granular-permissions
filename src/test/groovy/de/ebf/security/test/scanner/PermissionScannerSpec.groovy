@@ -17,11 +17,13 @@ package de.ebf.security.test.scanner
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
-
+import spock.lang.Ignore
 import spock.lang.Specification
 import de.ebf.security.jwt.testapp.TestApplication
 import de.ebf.security.scanner.PermissionScanner
 
+
+@Ignore
 @ContextConfiguration(classes = TestApplication)
 class PermissionScannerSpec extends Specification{
 

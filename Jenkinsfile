@@ -19,7 +19,7 @@ pipeline {
                                                           usernameVariable: 'USER',
                                                           passwordVariable: 'PASS')]) {
             sh """
-              gradle clean build -i -Pnexus_user=$USER -Pnexus_pass=$PASS
+              gradle clean build -d -Pnexus_user=$USER -Pnexus_pass=$PASS
             """
           }
       }
