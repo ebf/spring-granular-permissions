@@ -24,7 +24,7 @@ import spock.lang.Specification
 import de.ebf.security.jwt.testapp.TestApplication
 import de.ebf.security.jwt.testapp.TestApplicationWithAuthorizedUser
 
-class MethodSecuritySpec extends Specification{
+class MethodSecuritySpec extends Specification {
 
     def "http request to / should result in 403" () {
 

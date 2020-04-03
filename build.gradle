@@ -11,13 +11,12 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: "com.github.hierynomus.license"
 apply plugin: 'maven'
-apply plugin: 'signing'
 
 sourceCompatibility = 1.8
 
 group = "de.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "1.0.2"
+version = "1.0.3"
 
 jar {
     manifest {
@@ -79,23 +78,19 @@ license {
     exclude "LICENSE.txt"
 }
 
-signing { sign configurations.archives }
-
 artifacts { archives sourcesJar,javadocJar }
 
 uploadArchives {
     repositories {
         mavenDeployer {
             configuration = configurations.deployerJars
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-            
-            
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+
+            repository(url: "http://repository.dev.ebf.de/nexus/repository/releases") {
+                authentication(userName: nexus_user, password: nexus_pass)
             }
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+            snapshotRepository(url: "http://repository.dev.ebf.de/nexus/repository/snapshots") {
+                authentication(userName: nexus_user, password: nexus_pass)
             }
             pom.project {
                 name 'Spring Granular Permissions'

@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ebf.security.internal.conditional;
+package de.ebf.security.repository;
 
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.core.type.AnnotatedTypeMetadata;
+import java.util.List;
 
-public class InitPermissionsDisable implements Condition {
+/**
+ * @author <a href="mailto:vuk.ljubicic@ebf.com">Vuk Ljubicic</a>
+ * Defines contract for reading and writing permissions to persistent or in-memory storage
+ * Default implementation supports JPA EntityManager
+ * @since 26.03.20, Thu
+ **/
+public interface PermissionModelRepository {
+    List<Object> findAllPermissionModels();
 
-    @Override
-    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String shouldDisable = context.getEnvironment().getProperty("init.permissions.disable");
-        return !("true".equalsIgnoreCase(shouldDisable));
-    }
-
+    void saveAllPermissionModels(List<Object> permissionModels);
 }

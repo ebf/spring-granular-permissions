@@ -15,101 +15,90 @@
  */
 package de.ebf.security.init;
 
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.core.Ordered;
-import org.springframework.transaction.annotation.Transactional;
-
-import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
-import de.ebf.security.exceptions.MoreThanOnePermissionNameFieldFoundException;
-import de.ebf.security.exceptions.NoPermissionFieldNameFoundException;
-import de.ebf.security.exceptions.NoPermissionModelFoundException;
 import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.permission.BasicPermission;
 import de.ebf.security.internal.permission.InternalPermission;
-import de.ebf.security.internal.services.PermissionModelFinder;
 import de.ebf.security.internal.services.PermissionModelOperations;
+import de.ebf.security.repository.PermissionModelRepository;
 import de.ebf.security.scanner.PermissionScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
 
-@Transactional
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class InitPermissions implements ApplicationListener<ContextRefreshedEvent>, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(InitPermissions.class);
 
+    private PermissionModelDefinition permissionModelDefinition;
+    private PermissionModelRepository permissionModelRepository;
+    private PermissionScanner permissionScanner;
+    private PermissionModelOperations permissionModelOperations;
+
+    public InitPermissions(PermissionModelDefinition permissionModelDefinition,
+                           PermissionModelRepository permissionModelRepository,
+                           PermissionScanner permissionScanner,
+                           PermissionModelOperations permissionModelOperations) {
+        this.permissionModelDefinition = permissionModelDefinition;
+        this.permissionModelRepository = permissionModelRepository;
+        this.permissionScanner = permissionScanner;
+        this.permissionModelOperations = permissionModelOperations;
+    }
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        ConfigurableApplicationContext applicationContext = (ConfigurableApplicationContext) event
-                .getApplicationContext();
+        final Set<InternalPermission> declaredPermissions = permissionScanner.scan();
+        final Set<InternalPermission> existingPermissions = findExistingPermissions();
 
-        PermissionModelFinder permissionModelFinder = applicationContext.getBean(PermissionModelFinder.class);
+        logger.debug("Found existing permissions from Repository {}", existingPermissions);
 
-        PermissionModelDefinition permissionModelDefinition;
-        try {
-            permissionModelDefinition = permissionModelFinder.find();
-        } catch (MoreThanOnePermissionModelFoundException | NoPermissionModelFoundException
-                | NoPermissionFieldNameFoundException | MoreThanOnePermissionNameFieldFoundException e) {
-            logger.error("Permission model not well defined, cannot store permissions. Permission system won't work.",
-                    e);
+        final List<Object> permissionModelInstances = new ArrayList<>();
 
-            applicationContext.close();
-            applicationContext.stop();
-            return;
-        }
+        declaredPermissions.forEach(permission -> {
+            logger.info("Registering permission: {}", permission.getName());
 
-        PermissionScanner permissionScanner = applicationContext.getBean(PermissionScanner.class);
-        EntityManager entityManager = applicationContext.getBean(EntityManager.class);
-        PermissionModelOperations permissionModelOperations = applicationContext
-                .getBean(PermissionModelOperations.class);
-
-        Set<InternalPermission> permissions = permissionScanner.scan();
-
-        CriteriaQuery selectAll = entityManager.getCriteriaBuilder()
-                .createQuery(permissionModelDefinition.getPermissionModelClass());
-        selectAll.select(selectAll.from(permissionModelDefinition.getPermissionModelClass()));
-        List<Object> existingPermissionRecords = entityManager.createQuery(selectAll).getResultList();
-
-        Set<InternalPermission> existingPermissions = existingPermissionRecords.stream()
-                .map(new Function<Object, InternalPermission>() {
-                    @Override
-                    public InternalPermission apply(Object permissionRecord) {
-
-                        String permissionName = permissionModelOperations.getName(permissionModelDefinition,
-                                permissionRecord);
-
-                        return new BasicPermission(permissionName);
-
-                    }
-                }).collect(Collectors.toSet());
-
-        permissions.forEach(fun -> {
-            logger.info("Registering permission: {}", fun.getName());
-
-            if (existingPermissions.stream().anyMatch(existingFunction -> existingFunction.getName().equals(fun.getName()))) {
-                logger.info("Permission {} already exists.", fun.getName());
+            if (exists(permission, existingPermissions)) {
+                logger.info("Permission {} already exists.", permission.getName());
                 return;
             }
 
-            Object permissionModelInstance = permissionModelOperations.construct(permissionModelDefinition, fun);
+            final Object model = permissionModelOperations.construct(permissionModelDefinition, permission);
 
-            entityManager.merge(permissionModelInstance);
+            logger.debug("Constructed {} from {}", model, permission);
+
+            permissionModelInstances.add(model);
         });
 
+        permissionModelRepository.saveAllPermissionModels(permissionModelInstances);
     }
 
     @Override
     public int getOrder() {
         return 0;
+    }
+
+    private Set<InternalPermission> findExistingPermissions() {
+        final List<Object> models = permissionModelRepository.findAllPermissionModels();
+
+        return models.stream()
+                .map(this::toInternalPermission)
+                .collect(Collectors.toSet());
+    }
+
+    private InternalPermission toInternalPermission(Object value) {
+        final String permissionName = permissionModelOperations.getName(permissionModelDefinition, value);
+        logger.debug("Converting an {} to an Internal Permission with name: {}", value, permissionName);
+        return new BasicPermission(permissionName);
+    }
+
+    private boolean exists(InternalPermission candidate, Set<InternalPermission> existing) {
+        return existing.stream().anyMatch(permission -> candidate.getName().equals(permission.getName()));
     }
 
 }

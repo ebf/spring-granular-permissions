@@ -15,24 +15,36 @@
  */
 package de.ebf.security;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-
 import de.ebf.security.annotations.PermissionModel;
 import de.ebf.security.annotations.ProtectedResource;
+import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
+import de.ebf.security.exceptions.MoreThanOnePermissionNameFieldFoundException;
+import de.ebf.security.exceptions.NoPermissionFieldNameFoundException;
+import de.ebf.security.exceptions.NoPermissionModelFoundException;
 import de.ebf.security.init.InitPermissions;
-import de.ebf.security.internal.conditional.InitPermissionsDisable;
+import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.services.PermissionModelFinder;
 import de.ebf.security.internal.services.PermissionModelOperations;
 import de.ebf.security.internal.services.impl.DefaultPermissionModelFinder;
 import de.ebf.security.internal.services.impl.InterfaceBeanScanner;
 import de.ebf.security.internal.services.impl.ReflectivePermissionModelOperations;
+import de.ebf.security.repository.DefaultPermissionModelRepository;
+import de.ebf.security.repository.PermissionModelRepository;
+import de.ebf.security.scanner.DefaultPermissionScanner;
+import de.ebf.security.scanner.PermissionScanner;
+import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
+
+import javax.persistence.EntityManager;
 
 @Configuration
-@Import({ MethodSecurityConfiguration.class })
+@Import({MethodSecurityConfiguration.class})
 public class PermissionsConfig {
 
     @Bean
@@ -48,7 +60,6 @@ public class PermissionsConfig {
     @Bean
     public InterfaceBeanScanner permissionModelInterfaceBeanScanner() {
         InterfaceBeanScanner interfaceBeanScanner = new InterfaceBeanScanner();
-
         interfaceBeanScanner.addIncludeFilter(new AnnotationTypeFilter(PermissionModel.class));
         return interfaceBeanScanner;
     }
@@ -56,15 +67,51 @@ public class PermissionsConfig {
     @Bean
     public InterfaceBeanScanner protectedResourceInterfaceBeanScanner() {
         InterfaceBeanScanner interfaceBeanScanner = new InterfaceBeanScanner();
-
         interfaceBeanScanner.addIncludeFilter(new AnnotationTypeFilter(ProtectedResource.class));
         return interfaceBeanScanner;
     }
 
-    @Conditional(InitPermissionsDisable.class)
     @Bean
-    public InitPermissions initPermissions() {
-        return new InitPermissions();
+    public PermissionModelDefinition permissionModelDefinition(@Autowired PermissionModelFinder permissionModelFinder) {
+        try {
+            return permissionModelFinder.find();
+        } catch (NoPermissionModelFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "You need to define at least class with a @PermissionModel annotation", e);
+        } catch (MoreThanOnePermissionModelFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "More than one Permission Model was found in classpath: " + e.getClassNames(), e);
+        } catch (NoPermissionFieldNameFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "You need to annotate one field on your Permission Model with @PermissionNameField", e);
+        } catch (MoreThanOnePermissionNameFieldFoundException e) {
+            throw new FatalBeanException("Could not create Permission Model Definition bean. " +
+                    "You can not annotate more than one field on your Permission Model with @PermissionNameField", e);
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PermissionModelRepository.class)
+    public DefaultPermissionModelRepository defaultPermissionModelRepository(
+            EntityManager entityManager, PermissionModelDefinition permissionModelDefinition
+    ) {
+        return new DefaultPermissionModelRepository(entityManager, permissionModelDefinition);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PermissionScanner.class)
+    public DefaultPermissionScanner defaultPermissionScanner() {
+        return new DefaultPermissionScanner();
+    }
+
+    @Bean
+    @ConditionalOnBean(PermissionModelRepository.class)
+    public InitPermissions initPermissions(PermissionModelDefinition permissionModelDefinition,
+                                           PermissionModelRepository permissionModelRepository,
+                                           PermissionScanner permissionScanner,
+                                           PermissionModelOperations permissionModelOperations) {
+        return new InitPermissions(permissionModelDefinition,
+                permissionModelRepository, permissionScanner, permissionModelOperations);
     }
 
 }

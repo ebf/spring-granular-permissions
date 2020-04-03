@@ -15,22 +15,21 @@
  */
 package de.ebf.security.test.integration
 
+import de.ebf.security.jwt.testapp.TestApplicationWithCustomRepository
+import de.ebf.security.jwt.testapp.TestApplicationWithJpaRepositories
 import groovy.json.JsonSlurper
-
 import org.apache.http.client.fluent.Request
 import org.springframework.boot.SpringApplication
-
 import spock.lang.Shared
 import spock.lang.Specification
-import de.ebf.security.jwt.testapp.TestApplicationWithJpaRepositories
 
-class JpaRepositoryMethodSecuritySpec extends Specification {
+class CustomRepositoryMethodSecuritySpec extends Specification {
 
     @Shared
     def app
 
     def setupSpec() {
-        app = SpringApplication.run(TestApplicationWithJpaRepositories)
+        app = SpringApplication.run(TestApplicationWithCustomRepository)
     }
     def cleanupSpec() {
         app.stop()
@@ -74,7 +73,7 @@ class JpaRepositoryMethodSecuritySpec extends Specification {
         then:
         returnResponse.statusLine.statusCode == 200
         json.page.totalElements == 2
-        json._embedded.models[0].timestamp == 0
-        json._embedded.models[1].timestamp == 0
+        json._embedded.models[0].timestamp != 0
+        json._embedded.models[1].timestamp != 0
     }
 }

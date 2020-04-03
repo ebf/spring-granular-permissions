@@ -15,6 +15,8 @@
  */
 package de.ebf.security.test.integration
 
+import spock.lang.Ignore
+
 import javax.persistence.EntityManager
 import javax.persistence.TypedQuery
 
