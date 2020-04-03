@@ -30,7 +30,6 @@ import de.ebf.security.jwt.testapp.models.Model
 
 
 @ContextConfiguration(classes = TestApplication)
-@Ignore
 class InitPermissionsIntegrationSpec extends Specification {
 
     @Autowired
