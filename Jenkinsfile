@@ -26,6 +26,9 @@ pipeline {
     }
 
     stage('Publish Archives') {
+      when {
+          branch 'master'
+      }
       agent {
           docker {
             image 'gradle:4.10.2-jdk8-slim'
