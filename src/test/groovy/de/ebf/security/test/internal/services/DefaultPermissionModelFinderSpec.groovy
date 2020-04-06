@@ -15,16 +15,13 @@
  */
 package de.ebf.security.test.internal.services
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
-import spock.lang.Ignore
-import spock.lang.Specification
 import de.ebf.security.internal.services.PermissionModelFinder
 import de.ebf.security.jwt.testapp.TestApplication
 import de.ebf.security.jwt.testapp.models.Model
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.ContextConfiguration
+import spock.lang.Specification
 
-
-@Ignore
 @ContextConfiguration(classes = TestApplication)
 class DefaultPermissionModelFinderSpec extends Specification {
 

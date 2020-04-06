@@ -15,16 +15,14 @@
  */
 package de.ebf.security.test.internal.services
 
-import spock.lang.Ignore
-import spock.lang.Specification
 import de.ebf.security.internal.data.PermissionModelDefinition
-import de.ebf.security.internal.permission.InternalPermission;
+import de.ebf.security.internal.permission.InternalPermission
 import de.ebf.security.internal.services.PermissionModelOperations
 import de.ebf.security.internal.services.impl.ReflectivePermissionModelOperations
 import de.ebf.security.jwt.testapp.controllers.TestController
 import de.ebf.security.jwt.testapp.models.Model
+import spock.lang.Specification
 
-@Ignore
 class ReflectivePermissionModelOperationsSpec extends Specification {
 
     def "should return null if something went wrong during instantiation" () {

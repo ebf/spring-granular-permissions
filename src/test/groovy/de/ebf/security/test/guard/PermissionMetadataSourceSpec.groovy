@@ -15,19 +15,15 @@
  */
 package de.ebf.security.test.guard
 
-import spock.lang.Ignore
-
-import java.lang.reflect.Method
-
-import spock.lang.Specification
 import de.ebf.security.guard.PermissionMetadataSource
 import de.ebf.security.test.guard.testcases.ProtectedClass
 import de.ebf.security.test.guard.testcases.ProtectedInterface
 import de.ebf.security.test.guard.testcases.PublicClass
 import de.ebf.security.test.guard.testcases.PublicInterface
+import spock.lang.Specification
 
+import java.lang.reflect.Method
 
-@Ignore
 class PermissionMetadataSourceSpec extends Specification{
 
     def "should return config attributes from the protected interface for protected interface public class" () {

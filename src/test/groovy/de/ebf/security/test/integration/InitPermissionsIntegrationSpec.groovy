@@ -29,6 +29,7 @@ import de.ebf.security.jwt.testapp.models.Model
 
 
 
+@Ignore
 @ContextConfiguration(classes = TestApplication)
 class InitPermissionsIntegrationSpec extends Specification {
 

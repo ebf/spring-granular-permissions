@@ -15,16 +15,13 @@
  */
 package de.ebf.security.test.integration
 
+import de.ebf.security.jwt.testapp.TestApplicationWithJpaRepositories
 import groovy.json.JsonSlurper
-
 import org.apache.http.client.fluent.Request
 import org.springframework.boot.SpringApplication
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
-import de.ebf.security.jwt.testapp.TestApplicationWithJpaRepositories
 
-@Ignore
 class JpaRepositoryMethodSecuritySpec extends Specification {
 
     @Shared
