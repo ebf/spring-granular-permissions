@@ -122,3 +122,7 @@ uploadArchives {
         }
     }
 }
+
+test {
+   forkEvery = 1
+}
