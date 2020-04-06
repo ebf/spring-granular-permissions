@@ -19,7 +19,7 @@ pipeline {
                                                           usernameVariable: 'USER',
                                                           passwordVariable: 'PASS')]) {
             sh """
-              gradle clean build --no-daemon -Pnexus_user=$USER -Pnexus_pass=$PASS
+              gradle clean build --no-daemon
             """
           }
       }
@@ -46,7 +46,7 @@ pipeline {
               echo 'Publish Archives'
               echo '----------------------------------------------------------------------------------------'
 
-              sh "gradle uploadArchives -Pnexus_user=$USER -Pnexus_pass=$PASS"
+              sh "gradle uploadArchives -Dorg.gradle.project.nexus_user=$USER -Dorg.gradle.project.nexus_pass=$PASS"
           }
       }
     }
