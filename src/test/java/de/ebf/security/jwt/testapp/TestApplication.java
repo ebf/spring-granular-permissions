@@ -37,7 +37,6 @@ import de.ebf.security.scanner.PermissionScanner;
 @ComponentScan(basePackageClasses = TestController.class)
 public class TestApplication {
 
-
     @Bean
     public PermissionScanner permissionScanner() {
         DefaultPermissionScanner defaultPermissionScanner = new DefaultPermissionScanner();

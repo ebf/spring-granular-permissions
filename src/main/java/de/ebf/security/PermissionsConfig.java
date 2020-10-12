@@ -36,6 +36,7 @@ import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -99,13 +100,7 @@ public class PermissionsConfig {
     }
 
     @Bean
-    @ConditionalOnMissingBean(PermissionScanner.class)
-    public DefaultPermissionScanner defaultPermissionScanner() {
-        return new DefaultPermissionScanner();
-    }
-
-    @Bean
-    @ConditionalOnBean(PermissionModelRepository.class)
+    @ConditionalOnProperty(name="init.permissions.disable", havingValue = "false", matchIfMissing = true)
     public InitPermissions initPermissions(PermissionModelDefinition permissionModelDefinition,
                                            PermissionModelRepository permissionModelRepository,
                                            PermissionScanner permissionScanner,

@@ -80,6 +80,10 @@ license {
 
 artifacts { archives sourcesJar,javadocJar }
 
+test {
+   forkEvery(1)
+}
+
 uploadArchives {
     repositories {
         mavenDeployer {
