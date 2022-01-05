@@ -16,10 +16,15 @@
 package de.ebf.security.repository;
 
 import de.ebf.security.internal.data.PermissionModelDefinition;
+import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
+import org.springframework.orm.jpa.EntityManagerFactoryUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.criteria.CriteriaQuery;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,26 +32,55 @@ import java.util.List;
  * @since 26.03.20, Thu
  **/
 @Transactional
+@RequiredArgsConstructor
 public class DefaultPermissionModelRepository implements PermissionModelRepository {
 
-    private EntityManager entityManager;
-    private PermissionModelDefinition permissionModelDefinition;
+    private final EntityManagerFactory entityManagerFactory;
+    private final PermissionModelDefinition<PermissionModel> permissionModelDefinition;
 
-    public DefaultPermissionModelRepository(EntityManager entityManager, PermissionModelDefinition permissionModelDefinition) {
-        this.entityManager = entityManager;
-        this.permissionModelDefinition = permissionModelDefinition;
-    }
-
+    @NonNull
     @Override
-    public List<Object> findAllPermissionModels() {
-        CriteriaQuery selectAll = entityManager.getCriteriaBuilder()
+    @SuppressWarnings("unchecked")
+    public <T extends PermissionModel> Collection<T> findAll() {
+        final EntityManager entityManager = obtainTransactionalEntityManager(false);
+
+        final CriteriaQuery<PermissionModel> query = entityManager.getCriteriaBuilder()
                 .createQuery(permissionModelDefinition.getPermissionModelClass());
-        selectAll.select(selectAll.from(permissionModelDefinition.getPermissionModelClass()));
-        return entityManager.createQuery(selectAll).getResultList();
+        query.select(query.from(permissionModelDefinition.getPermissionModelClass()));
+
+        return (List<T>) entityManager.createQuery(query)
+                .getResultList();
+    }
+
+    @NonNull
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends PermissionModel> T create(@NonNull String permission) {
+        final EntityManager entityManager = obtainTransactionalEntityManager(true);
+        final T permissionModel = (T) permissionModelDefinition.instantiate(permission);
+
+        return entityManager.merge(permissionModel);
     }
 
     @Override
-    public void saveAllPermissionModels(List<Object> permissionModels) {
-        permissionModels.forEach(pm -> entityManager.merge(pm));
+    public void delete(@NonNull String permission) {
+        final EntityManager entityManager = obtainTransactionalEntityManager(true);
+        final PermissionModel permissionModel = permissionModelDefinition.instantiate(permission);
+
+        entityManager.remove(permissionModel);
+    }
+
+    private @NonNull EntityManager obtainTransactionalEntityManager(boolean required) {
+        EntityManager entityManager = EntityManagerFactoryUtils.getTransactionalEntityManager(entityManagerFactory);
+
+        if (entityManager == null && !required) {
+            entityManager = entityManagerFactory.createEntityManager();
+        }
+
+        if (entityManager == null) {
+            throw new IllegalStateException("Could not create Entity Manager");
+        }
+
+        return entityManager;
     }
 }

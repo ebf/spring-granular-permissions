@@ -15,95 +15,56 @@
  */
 package de.ebf.security.internal.services.impl;
 
-import de.ebf.security.annotations.PermissionNameField;
 import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
-import de.ebf.security.exceptions.MoreThanOnePermissionNameFieldFoundException;
-import de.ebf.security.exceptions.NoPermissionFieldNameFoundException;
 import de.ebf.security.exceptions.NoPermissionModelFoundException;
-import de.ebf.security.internal.data.DefaultPermissionModelDefinition;
+import de.ebf.security.exceptions.PermissionModelException;
 import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.services.PermissionModelFinder;
-import org.apache.commons.lang3.reflect.ConstructorUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
-import org.springframework.context.ApplicationContext;
+import de.ebf.security.repository.PermissionModel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.metamodel.ManagedType;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.metamodel.EntityType;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
  */
+@Slf4j
+@RequiredArgsConstructor
 public class DefaultPermissionModelFinder implements PermissionModelFinder {
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private InterfaceBeanScanner permissionModelInterfaceBeanScanner;
+    private final EntityManagerFactory entityManagerFactory;
 
     @Override
-    public PermissionModelDefinition find()
-            throws MoreThanOnePermissionModelFoundException, NoPermissionModelFoundException,
-            NoPermissionFieldNameFoundException, MoreThanOnePermissionNameFieldFoundException {
+    @SuppressWarnings("unchecked")
+    public PermissionModelDefinition<PermissionModel> find() throws PermissionModelException {
+        final Set<Class<?>> candidates = entityManagerFactory.getMetamodel()
+                .getEntities()
+                .stream()
+                .map(EntityType::getJavaType)
+                .filter(type -> ClassUtils.isAssignable(PermissionModel.class, type))
+                .collect(Collectors.toSet());
 
-        List<String> packageNames = EntityScanPackages.get(applicationContext).getPackageNames();
+        log.debug("Found following Permission Model candidates: {}", candidates);
 
-        Optional<Stream<BeanDefinition>> permissionModelBDs = packageNames.stream().map(packageName -> {
-            return permissionModelInterfaceBeanScanner.findCandidateComponents(packageName).stream();
-        }).reduce(Stream::concat);
-
-        if (!permissionModelBDs.isPresent()) {
+        if (CollectionUtils.isEmpty(candidates)) {
             throw new NoPermissionModelFoundException();
         }
 
-        List<BeanDefinition> permissionModelBDList = permissionModelBDs.get().collect(Collectors.toList());
-
-        if (permissionModelBDList.isEmpty()) {
-            throw new NoPermissionModelFoundException();
+        if (candidates.size() > 1) {
+            throw new MoreThanOnePermissionModelFoundException(candidates);
         }
 
-        if (permissionModelBDList.size() > 1) {
-            throw new MoreThanOnePermissionModelFoundException(permissionModelBDList);
-        }
+        final Class<PermissionModel> candidate = (Class<PermissionModel>) CollectionUtils.firstElement(candidates);
+        Assert.notNull(candidate, "Permission model candidate can not be null");
 
-        BeanDefinition beanDefinition = permissionModelBDList.get(0);
-
-        EntityManager entityManager = applicationContext.getBean(EntityManager.class);
-        Class<?> permissionModelClass = null;
-        for (ManagedType<?> managedType : entityManager.getMetamodel().getManagedTypes()) {
-            if (managedType.getJavaType().getName().equals(beanDefinition.getBeanClassName())) {
-                permissionModelClass = managedType.getJavaType();
-                break;
-            }
-        }
-        if (permissionModelClass == null) {
-            throw new NoPermissionModelFoundException();
-        }
-        List<Field> permissionNameFields = FieldUtils.getFieldsListWithAnnotation(permissionModelClass, PermissionNameField.class);
-
-        if (permissionNameFields.isEmpty()) {
-            throw new NoPermissionFieldNameFoundException();
-        }
-
-        if (permissionNameFields.size() > 1) {
-            throw new MoreThanOnePermissionNameFieldFoundException();
-        }
-
-        Field permissionNameField = permissionNameFields.get(0);
-
-        Constructor<?> defaultConstructor = ConstructorUtils.getMatchingAccessibleConstructor(permissionModelClass);
-
-        return new DefaultPermissionModelDefinition(permissionModelClass, permissionNameField, defaultConstructor);
-
+        return PermissionModelDefinition.forType(candidate);
     }
 
 }

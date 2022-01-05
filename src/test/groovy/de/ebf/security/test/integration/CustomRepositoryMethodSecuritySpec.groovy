@@ -16,64 +16,57 @@
 package de.ebf.security.test.integration
 
 import de.ebf.security.jwt.testapp.TestApplicationWithCustomRepository
-import de.ebf.security.jwt.testapp.TestApplicationWithJpaRepositories
-import groovy.json.JsonSlurper
-import org.apache.http.client.fluent.Request
-import org.springframework.boot.SpringApplication
-import spock.lang.Shared
-import spock.lang.Specification
+import de.ebf.security.jwt.testapp.models.Model
+import org.springframework.hateoas.server.core.TypeReferences
+import org.springframework.http.HttpStatus
+import org.springframework.test.context.ContextConfiguration
 
-class CustomRepositoryMethodSecuritySpec extends Specification {
+@ContextConfiguration(classes = TestApplicationWithCustomRepository)
+class CustomRepositoryMethodSecuritySpec extends SecuritySpecification {
 
-    @Shared
-    def app
-
-    def setupSpec() {
-        app = SpringApplication.run(TestApplicationWithCustomRepository)
-    }
-    def cleanupSpec() {
-        app.stop()
-        app.close()
-    }
-    def "should respond with 403 when an attempt to access a protected jpa repository without the needed permissions is made" () {
-        setup:
-        def encoder = Base64.encoder
-        def authBytes = encoder.encode("test:test".bytes)
-        def authString = new String(authBytes);
-
-        println authString
+    def "should respond with 401 when an attempt to access a protected jpa repository without authentication" () {
 
         when:
-        def returnResponse = Request.Get("http://localhost:3001/models")
-                .addHeader("Authorization", "Basic $authString")
-                .execute().returnResponse()
+        def response = request("models", null, Object)
+
         then:
-        returnResponse.statusLine.statusCode == 403
+        response.statusCode == HttpStatus.UNAUTHORIZED
+    }
+
+    def "should respond with 401 when an attempt to access a protected jpa repository with invalid credentials" () {
+
+        when:
+        def response = request("models", "unknown:unknown", Object)
+
+        then:
+        response.statusCode == HttpStatus.UNAUTHORIZED
+    }
+
+    def "should respond with 403 when an attempt to access a protected jpa repository without the needed permissions is made" () {
+
+        when:
+        def response = request("models", "test:test", Object)
+
+        then:
+        response.statusCode == HttpStatus.FORBIDDEN
     }
 
     def "should respond with 200 when an attempt to access a protected jpa repository with the needed permissions is made"() {
-        setup:
-        def encoder = Base64.encoder
-        def authBytes = encoder.encode("user:user".bytes)
-        def authString = new String(authBytes);
-        def jsonSlurper = new JsonSlurper()
 
-        println authString
+        setup:
+        def type = new TypeReferences.PagedModelType<Model>() {}
 
         when:
-        def returnResponse = Request.Get("http://localhost:3001/models")
-                .addHeader("Authorization", "Basic $authString")
-                .execute().returnResponse()
-
-        and:
-        def json = jsonSlurper.parseText returnResponse.entity.content.text
-
-        println json
+        def response = request("models", "user:user", type)
 
         then:
-        returnResponse.statusLine.statusCode == 200
-        json.page.totalElements == 2
-        json._embedded.models[0].timestamp != 0
-        json._embedded.models[1].timestamp != 0
+        response.statusCode == HttpStatus.OK
+
+        and:
+        def model = response.body
+
+        model.metadata.totalElements == 2
+        model.content[0].timestamp != 0
+        model.content[1].timestamp != 0
     }
 }

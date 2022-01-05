@@ -15,19 +15,14 @@
  */
 package de.ebf.security.exceptions;
 
-public class NoPermissionModelFoundException extends Exception {
+import de.ebf.security.repository.PermissionModel;
 
-    public NoPermissionModelFoundException(ClassNotFoundException e) {
-        super(e);
-    }
+public class NoPermissionModelFoundException extends PermissionModelException {
+    private static final long serialVersionUID = -9191745275272816537L;
 
     public NoPermissionModelFoundException() {
-        super();
+        super("Could not find any Permission Model candidate. Make sure that you have defined one " +
+                "Entity that  implements the '" + PermissionModel.class + "' interface");
     }
-
-    /**
-     * 
-     */
-    private static final long serialVersionUID = -9191745275272816537L;
 
 }

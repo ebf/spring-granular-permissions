@@ -21,13 +21,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Annotation that is commonly used on Spring Bean methods that would instruct the
+ * Spring {@link org.springframework.security.access.AccessDecisionManager} to evaluate
+ * the method invocation.
+ * <p>
+ * The name of the permission needs to be present in the current
+ * {@link org.springframework.security.core.Authentication} as one of the
+ * {@link org.springframework.security.core.GrantedAuthority authorities}.
+ *
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Permission {
 
+    /**
+     * @return permission name to be checked
+     */
     String value();
 }

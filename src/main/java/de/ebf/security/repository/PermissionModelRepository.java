@@ -15,16 +15,43 @@
  */
 package de.ebf.security.repository;
 
-import java.util.List;
+import org.springframework.lang.NonNull;
+
+import java.util.Collection;
 
 /**
+ * Defines contract for reading, writing and removing permissions.
+ *
+ * @see PermissionModel
+ * @see de.ebf.security.scanner.PermissionScanner
+ * @see de.ebf.security.init.PermissionInitializer
  * @author <a href="mailto:vuk.ljubicic@ebf.com">Vuk Ljubicic</a>
- * Defines contract for reading and writing permissions to persistent or in-memory storage
- * Default implementation supports JPA EntityManager
  * @since 26.03.20, Thu
  **/
 public interface PermissionModelRepository {
-    List<Object> findAllPermissionModels();
 
-    void saveAllPermissionModels(List<Object> permissionModels);
+    /**
+     * Retrieves all permissions models from the configured store
+     *
+     * @param <T> permission model generic type
+     * @return Collection of permission models, can't be {@literal null}
+     */
+    @NonNull <T extends PermissionModel> Collection<T> findAll();
+
+    /**
+     * Creates the scanned {@link de.ebf.security.annotations.Permission} value that
+     * was found in the classpath by the {@link de.ebf.security.scanner.PermissionScanner}.
+     *
+     * @param permission Permission value to be stored, can't be {@literal null}
+     */
+    @NonNull <T extends PermissionModel> T create(@NonNull String permission);
+
+    /**
+     * Removes the permission value that is no longer present in the list of available
+     * {@link de.ebf.security.annotations.Permission} that was found by the
+     * {@link de.ebf.security.scanner.PermissionScanner}.
+     *
+     * @param permission Permission value to be removed, can't be {@literal null}
+     */
+    void delete(@NonNull String permission);
 }

@@ -13,13 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ebf.security.exceptions;
+package de.ebf.security.jwt.testapp.othermodels;
 
-public class NoPermissionFieldNameFoundException extends Exception {
+import de.ebf.security.repository.PermissionModel;
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 3244133574132784263L;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Entity
+public class OtherPermissionModel implements PermissionModel {
+
+    @Id
+    private String name;
+
+    @Override
+    public String getPermission() {
+        return name;
+    }
+
+    @Override
+    public void setPermission(String permission) {
+        name = permission;
+    }
 
 }

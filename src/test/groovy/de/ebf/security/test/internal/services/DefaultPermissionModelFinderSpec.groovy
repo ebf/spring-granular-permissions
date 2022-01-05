@@ -15,28 +15,76 @@
  */
 package de.ebf.security.test.internal.services
 
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
+import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException
+import de.ebf.security.exceptions.NoPermissionModelFoundException
+import de.ebf.security.internal.services.impl.DefaultPermissionModelFinder
+import de.ebf.security.jwt.testapp.othermodels.OtherPermissionModel
 
 import spock.lang.Specification
-import de.ebf.security.internal.services.PermissionModelFinder
-import de.ebf.security.jwt.testapp.TestApplication
 import de.ebf.security.jwt.testapp.models.Model
 
+import javax.persistence.EntityManagerFactory
+import javax.persistence.metamodel.EntityType
+import javax.persistence.metamodel.Metamodel
 
-@ContextConfiguration(classes = TestApplication)
+
 class DefaultPermissionModelFinderSpec extends Specification {
 
-    @Autowired
-    private PermissionModelFinder permissionModelFinder
+    def entityManagerFactory = Mock(EntityManagerFactory)
+    def metamodel = Mock(Metamodel)
 
-    def "should return permission model definition based on Model class"(){
+    def "should return permission model definition based on Model class"() {
+        setup:
+        def finder = new DefaultPermissionModelFinder(entityManagerFactory)
+
         when:
-        def permissionModelDefinition = permissionModelFinder.find()
+        def permissionModelDefinition = finder.find()
 
         then:
+        1 * entityManagerFactory.metamodel >> metamodel
+        1 * metamodel.entities >> [entityTypeFor(Model), entityTypeFor(String)]
+
         permissionModelDefinition.permissionModelClass == Model
-        permissionModelDefinition.defaultConstructor == Model.class.getDeclaredConstructor()
-        permissionModelDefinition.permissionNameField == Model.class.getDeclaredField("name")
+
+        and:
+        def model = permissionModelDefinition.instantiate("test")
+        model.permission == "test"
     }
+
+    def "should throw no model found exception"() {
+        setup:
+        def finder = new DefaultPermissionModelFinder(entityManagerFactory)
+
+        when:
+        finder.find()
+
+        then:
+        1 * entityManagerFactory.metamodel >> metamodel
+        1 * metamodel.entities >> [entityTypeFor(String)]
+
+        and:
+        thrown(NoPermissionModelFoundException)
+    }
+
+    def "should throw more than one model found exception"() {
+        setup:
+        def finder = new DefaultPermissionModelFinder(entityManagerFactory)
+
+        when:
+        finder.find()
+
+        then:
+        1 * entityManagerFactory.metamodel >> metamodel
+        1 * metamodel.entities >> [entityTypeFor(Model), entityTypeFor(OtherPermissionModel)]
+
+        and:
+        thrown(MoreThanOnePermissionModelFoundException)
+    }
+
+    private EntityType<?> entityTypeFor(Class<?> type) {
+        def entityType = Mock(EntityType)
+        entityType.javaType >> type
+        return entityType
+    }
+
 }

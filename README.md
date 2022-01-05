@@ -15,7 +15,7 @@ SGP functionality consists of two equally important parts: Gathering permissions
 #### Gathering permissions
 
 SGP scans the configured app package for `ProtectedResource`s and their `Permission`s.
-Once it finds a `Permission` it stores it into the configured `PermissionModel`'s `PermissionNameField`. 
+Once it finds a `Permission` it stores it into the JPA Entity that implements the `PermissionModel` interface.
 
 This process happens at every app startup. This makes for a very nice experience when new features are added that should be protected, they are automatically picked up and ready.
 
@@ -35,27 +35,33 @@ It's up to you to provide the other pieces of the app that make use of the permi
 
 ## Are there any preconditions?
 
-Yes, in order to store the `Permissions` at app startup SGP needs the `EntityManager` bean to be available and the `@EntityScan` annotation to be configured correctly.
+Yes and no. By default, this library uses JPA to manage scanned `Permissions` at app startup. Meaning, it is advisable to have the `EntityManagerFactory` Bean to be available and the `@EntityScan` annotation to be configured correctly.
 
-Also, the app will fail to start if no transaction manager is configured.
-
+If you are not using JPA, you can configure your implementation of the `PermissionModelRepository` that either uses Mongo or any type of persistent storage.  
 
 ## How do I configure all this?
 
-- add the SGP dependency
-	- gradle: `compile("de.ebf:spring-granular-permissions:1.0.0")`
-	
-	- maven:
+#### Add the SGP dependency
 
-	```xml
-	<dependency>
-		<groupId>de.ebf</groupId>
-		<artifactId>spring-granular-permissions</artifactId>
-		<version>1.0.0</version>
-	</dependency>
-	```
+For gradle:
 
-- make sure the `@EntityScan` annotation is present in your DB configuration and points to the package(s) of your DB models.
+```groovy
+compile("de.ebf:spring-granular-permissions:2.0.0")
+```
+
+For maven:
+
+```xml
+<dependency>
+	<groupId>de.ebf</groupId>
+	<artifactId>spring-granular-permissions</artifactId>
+	<version>2.0.0</version>
+</dependency>
+```
+
+#### Scan JPA entities
+
+Make sure the `@EntityScan` annotation is present in your DB configuration and points to the package(s) of your DB models.
 
 ```java
 @Configuration
@@ -65,49 +71,79 @@ public class MyDbConfiguration{
 }
 ```
 
-- Configure a domain model to be used for permission storage
+##### Configure a domain model to be used for permission storage
 
 ```java
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import de.ebf.security.annotations.PermissionModel;
-import de.ebf.security.annotations.PermissionNameField;
+import de.ebf.security.repository.PermissionModel;
 
 @Entity
-@PermissionModel
-public class Model {
+public class Model extends BaseModel implements PermissionModel {
 
-    @Id
-    @PermissionNameField
-    private String name;
+	@Id
+	private String name;
 
-    private String otherField;
+	private String otherField;
+    
+	/* your other entity fields ... */
+	
+	/* implement the methods from the PermissionModel interface */
+	
+	@Override
+	public void setPermission(String permission) {
+		this.name = permission;
+	}
 
-    ...
+	@Override
+	public String getPermission() {
+		return name;
+	}
+
+	/* your other entity getters and setters ... */
 }
 ```
 
-- configure SGP by importing the `PermissionConfig.class` and telling the `PermissionScanner` where to scan for resources and permissions
+##### Scan for permissions
+
+Configure SGP by annotating any of your configuration classes by the `PermissionScan` annotation and tell it where to look for the `Permission` annotations on your protected resources.
 
 ```java
-import de.ebf.security.scanner.DefaultPermissionScanner;
-import de.ebf.security.scanner.PermissionScanner;
+import de.ebf.security.annotations.PermissionScan;
 
 @Configuration
-@Import({ PermissionsConfig.class })
+@PermissionScan
 public class SGPConfiguration {
-    @Bean
-    public PermissionScanner permissionScanner() {
-        DefaultPermissionScanner defaultPermissionScanner = new DefaultPermissionScanner();
-        //tell the permission scanner where to scan for protected resources and permissions
-        defaultPermissionScanner.setBasePackage(getClass().getPackage().getName());
-        return defaultPermissionScanner;
-    }
+
 }
 ```
 
-- protect some resources
+By default, the `PermissionScan` annotation is going to scan for `Permissions` in the package name that is the same as the class where the annotation is located.
+
+If you wish to change this location, or include other ones, you can use the `basePackageNames` or `basePackageClasses` attributes like so:
+
+```java
+import de.ebf.security.annotations.PermissionScan;
+import my.classpackage.Type;
+
+@Configuration
+@PermissionScan(
+    basePackageNames = { "my.package", "my.other.package" },
+    basePackageClasses = Type.class
+)
+public class SGPConfiguration {
+
+}
+```
+
+This would scan the following packages for `ProtectedResources` and `Permissions`:
+ - `my.package`
+ - `my.other.package`
+ - `my.classpackage`
+
+
+##### Protect some resources
 
 ```java
 @RestController
@@ -125,6 +161,38 @@ public class TestController {
 
 That's it.
 
+### Configure permission initialization
+
+The `PermissionScan` is also initializing the permissions that were picked up by the scan using the `PermissionModelRepository`.
+
+Initialization process does the following:
+
+ - Creates permission models that were part of the scan and not yet persisted in the repository
+ - Deletes permissions models that are no longer part of the scan but are persisted in the repository
+
+You can choose to omit this process completely by specifying the `strategy` attribute on the `PermissionScan` annotation:
+
+```java
+import de.ebf.security.annotations.PermissionScan;
+
+@Configuration
+@PermissionScan(strategy = PermissionScan.InitializationStrategy.NONE)
+public class SGPConfiguration {
+
+}
+```
+
+You can choose when this initialization process should occur in the app startup process:
+
+ - `EARLY`
+> As soon as the `PermissionInitializer` Bean is ready
+
+ - `ON_READY` (default)
+> When the `ApplicationReadyEvent` is fired
+
+ - `ON_REFRESH`
+> When the `ContextRefreshedEvent` is fired
+
 ## Which errors/exceptions are thrown?
 
 Like with the [What does it do?](https://github.com/ebf/spring-granular-permissions#what-does-it-do) section, this is split in the same two parts:
@@ -135,19 +203,11 @@ They are all thrown at startup and will prevent your app from starting:
 
 - `NoPermissionModelFoundException`
 
-> When no entity is marked with `PermissionModel` annotation
+> When no entity implements the `PermissionModel` interface
 
 - `MoreThanOnePermissionModelFoundException`
 
-> When more than one entity is marked with `PermissionModel` annotation
-
-- `NoPermissionFieldNameFoundException`
-
-> When the `PermissionModel` entity has no field marked with `PermissionNameField`
-
-- `MoreThanOnePermissionNameFieldFoundException`
-
-> When the `PermissionModel` entity has more than one field marked with `PermissionNameField`
+> When more than one entity is implementing the `PermissionModel` interface
 
 #### Guarding protected resources exceptions
 

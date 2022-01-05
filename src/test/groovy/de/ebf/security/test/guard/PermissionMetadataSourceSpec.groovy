@@ -25,7 +25,7 @@ import de.ebf.security.test.guard.testcases.PublicClass
 import de.ebf.security.test.guard.testcases.PublicInterface
 
 
-class PermissionMetadataSourceSpec extends Specification{
+class PermissionMetadataSourceSpec extends Specification {
 
     def "should return config attributes from the protected interface for protected interface public class" () {
         setup:
