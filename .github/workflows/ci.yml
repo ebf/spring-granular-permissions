@@ -27,7 +27,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build
-        run: ./gradlew test
+        run: ./gradlew check --scan --stacktrace
 
       - name: Add coverage to PR
         uses: madrapps/jacoco-report@v1.2
