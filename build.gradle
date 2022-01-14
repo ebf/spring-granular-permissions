@@ -7,6 +7,7 @@ plugins {
 
     id 'io.freefair.lombok' version '5.0.1'
     id 'com.github.hierynomus.license'  version '0.16.1'
+    id 'org.hibernate.build.maven-repo-auth' version '3.0.4'
 }
 
 repositories {
