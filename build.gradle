@@ -47,7 +47,7 @@ dependencies {
     compileOnly('org.springframework.boot:spring-boot-starter-security:2.6.2')
 
     /* Test Database implementation */
-    testImplementation('com.h2database:h2:2.0.204')
+    testImplementation('com.h2database:h2:1.4.200')
 
     /* Spring and Spock Test dependencies */
     testImplementation('org.springframework.boot:spring-boot-starter-test:2.6.2')

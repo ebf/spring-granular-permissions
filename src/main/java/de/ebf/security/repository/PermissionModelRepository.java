@@ -18,6 +18,7 @@ package de.ebf.security.repository;
 import org.springframework.lang.NonNull;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * Defines contract for reading, writing and removing permissions.
@@ -39,19 +40,50 @@ public interface PermissionModelRepository {
     @NonNull <T extends PermissionModel> Collection<T> findAll();
 
     /**
-     * Creates the scanned {@link de.ebf.security.annotations.Permission} value that
+     * Creates or updates the scanned {@link de.ebf.security.annotations.Permission} values that
+     * were found in the classpath by the {@link de.ebf.security.scanner.PermissionScanner}.
+     *
+     * @param permissions Permission values to be stored, can't be {@literal null}
+     */
+    @SuppressWarnings("unchecked")
+    default @NonNull <T extends PermissionModel> Collection<T> saveAll(@NonNull Collection<String> permissions) {
+        return permissions.stream()
+                .map(permission -> (T) save(permission))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Creates or updates the scanned {@link de.ebf.security.annotations.Permission} value that
      * was found in the classpath by the {@link de.ebf.security.scanner.PermissionScanner}.
      *
      * @param permission Permission value to be stored, can't be {@literal null}
      */
-    @NonNull <T extends PermissionModel> T create(@NonNull String permission);
+    @NonNull <T extends PermissionModel> T save(@NonNull String permission);
 
     /**
-     * Removes the permission value that is no longer present in the list of available
+     * Creates or updates the {@link PermissionModel} instance.
+     *
+     * @param permission Permission model to be stored, can't be {@literal null}
+     */
+    @NonNull <T extends PermissionModel> T save(@NonNull T permission);
+
+    /**
+     * Removes a collection of permission models that are no longer present in the list of available
+     * {@link de.ebf.security.annotations.Permission} that was found by the
+     * {@link de.ebf.security.scanner.PermissionScanner}.
+     *
+     * @param permissions Permission models to be removed, can't be {@literal null}
+     */
+    default <T extends PermissionModel> void deleteAll(@NonNull Collection<T> permissions) {
+        permissions.forEach(this::delete);
+    }
+
+    /**
+     * Removes the permission model that is no longer present in the list of available
      * {@link de.ebf.security.annotations.Permission} that was found by the
      * {@link de.ebf.security.scanner.PermissionScanner}.
      *
      * @param permission Permission value to be removed, can't be {@literal null}
      */
-    void delete(@NonNull String permission);
+    <T extends PermissionModel> void delete(@NonNull T permission);
 }

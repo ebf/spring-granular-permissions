@@ -20,6 +20,8 @@ import org.springframework.lang.NonNull;
 import java.util.Set;
 
 /**
+ * Interface that is used to initialize the scanned permissions
+ *
  * @author : vladimir.spasic@ebf.com
  * @since : 04.01.22, Tue
  **/

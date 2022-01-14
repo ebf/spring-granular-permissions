@@ -167,7 +167,7 @@ class PermissionInitializerRunnerSpec extends Specification {
     }
 
     private def runnerFor(InitializationStrategy strategy) {
-        new PermissionInitializerConfiguration.PermissionInitializerRunner(
+        new PermissionScannerConfiguration.PermissionInitializerRunner(
                 scanner, initializer, strategy
         )
     }

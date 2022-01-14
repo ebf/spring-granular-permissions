@@ -18,39 +18,63 @@ package de.ebf.security;
 import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
 import de.ebf.security.exceptions.NoPermissionModelFoundException;
 import de.ebf.security.exceptions.PermissionModelException;
+import de.ebf.security.init.DefaultPermissionInitializer;
+import de.ebf.security.init.PermissionInitializer;
 import de.ebf.security.internal.data.PermissionModelDefinition;
 import de.ebf.security.internal.services.PermissionModelFinder;
 import de.ebf.security.internal.services.impl.DefaultPermissionModelFinder;
 import de.ebf.security.repository.DefaultPermissionModelRepository;
+import de.ebf.security.repository.InMemoryPermissionModelRepository;
 import de.ebf.security.repository.PermissionModel;
 import de.ebf.security.repository.PermissionModelRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Role;
 
 import javax.persistence.EntityManagerFactory;
 
 /**
- * Configuration that is imported by the {@link PermissionScanSelector} when there is
- * an {@link EntityManagerFactory} present in the classpath and a Spring Bean is declared in context.
+ * Spring auto-configuration class that would provide the default implementations of the
+ * {@link PermissionModelRepository} that is based on the {@link EntityManagerFactory} and
+ * an JPA entity that implements the {@link PermissionModel}.
  * <p>
- * This configuration would provide an implementation of the {@link PermissionModelRepository}
- * that is storing and reading the {@link de.ebf.security.repository.PermissionModel} from the
- * persistent store using the {@link EntityManagerFactory}. This information is stored within
- * the {@link PermissionModelDefinition} and it is given to us by the {@link PermissionModelFinder}.
+ * The {@link PermissionModel} entity is being found using the {@link PermissionModelFinder}
+ * that would provide sufficient information to the repository and {@link EntityManagerFactory}
+ * on how to read, store or delete those entities.
+ * <p>
+ * In case a custom implementation of the {@link PermissionModelRepository} present in the context,
+ * the default implementations would be ignored or when the {@link EntityManagerFactory} is not
+ * present in the classpath.
+ * <p>
+ * Apart from setting up the {@link PermissionModelRepository}, the {@link PermissionInitializer}
+ * bean is defined that would be used to persist new and delete unused permissions that were picked
+ * up by the {@link de.ebf.security.scanner.PermissionScanner}. The {@link PermissionInitializer}
+ * is using the {@link PermissionModelRepository} to perform those operations, therefore if no
+ * repository is present, a default {@link InMemoryPermissionModelRepository} implementation is used.
+ * <p>
+ * You can disable the permission initialization completely by using the <i>strategy</i> attribute on
+ * the {@link de.ebf.security.annotations.PermissionScan} annotation and setting it to
+ * {@link de.ebf.security.annotations.PermissionScan.InitializationStrategy#NONE}.
  *
  * @author : vladimir.spasic@ebf.com
  * @since : 05.01.22, Wed
  **/
-@ConditionalOnClass(EntityManagerFactory.class)
-@ConditionalOnMissingBean(PermissionModelRepository.class)
-public class PermissionRepositoryConfiguration {
+@Slf4j
+@Configuration
+@AutoConfigureAfter(HibernateJpaAutoConfiguration.class)
+public class GranularPermissionsAutoConfiguration {
 
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    @ConditionalOnBean(EntityManagerFactory.class)
     @ConditionalOnMissingBean(PermissionModelFinder.class)
     public PermissionModelFinder defaultPermissionModelFinder(EntityManagerFactory entityManagerFactory) {
         return new DefaultPermissionModelFinder(entityManagerFactory);
@@ -58,6 +82,8 @@ public class PermissionRepositoryConfiguration {
 
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    @ConditionalOnBean(EntityManagerFactory.class)
+    @ConditionalOnMissingBean(PermissionModelRepository.class)
     public PermissionModelRepository defaultPermissionModelRepository(
             EntityManagerFactory entityManagerFactory,
             PermissionModelFinder permissionModelFinder
@@ -77,6 +103,18 @@ public class PermissionRepositoryConfiguration {
         }
 
         return new DefaultPermissionModelRepository(entityManagerFactory, permissionModelDefinition);
+    }
+
+    @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    @ConditionalOnMissingBean(PermissionInitializer.class)
+    public PermissionInitializer applicationRunnerPermissionInitializer(
+            ObjectProvider<PermissionModelRepository> permissionModelRepository
+    ) {
+        return new DefaultPermissionInitializer(permissionModelRepository.getIfAvailable(() -> {
+            log.info("No PermissionModelRepository Bean found, falling back to default in-memory implementation...");
+            return new InMemoryPermissionModelRepository();
+        }));
     }
 
 }

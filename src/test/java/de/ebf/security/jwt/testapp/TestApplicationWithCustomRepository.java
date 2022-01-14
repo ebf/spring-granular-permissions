@@ -60,19 +60,24 @@ public class TestApplicationWithCustomRepository {
         @NonNull
         @Override
         @SuppressWarnings("unchecked")
-        public <T extends PermissionModel> T create(@NonNull String permission) {
+        public <T extends PermissionModel> T save(@NonNull String permission) {
             final Model model = new Model();
             model.setPermission(permission);
             model.setTimestamp(System.currentTimeMillis());
 
-            return (T) repository.save(model);
+            return save((T) model);
+        }
+
+        @NonNull
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T extends PermissionModel> T save(@NonNull T permission) {
+            return (T) repository.save((Model) permission);
         }
 
         @Override
-        public void delete(@NonNull String permission) {
-            final Model model = new Model();
-            model.setPermission(permission);
-            repository.delete(model);
+        public <T extends PermissionModel> void delete(@NonNull T permission) {
+            repository.delete((Model) permission);
         }
 
     }

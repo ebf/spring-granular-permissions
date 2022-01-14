@@ -15,10 +15,9 @@
  */
 package de.ebf.security.annotations;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import de.ebf.security.scanner.PermissionScanner;
+
+import java.lang.annotation.*;
 
 /**
  * Annotation that is commonly used on Spring Bean methods that would instruct the
@@ -31,6 +30,8 @@ import java.lang.annotation.Target;
  *
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
  */
+@Inherited
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Permission {

@@ -55,19 +55,22 @@ public class DefaultPermissionModelRepository implements PermissionModelReposito
     @NonNull
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends PermissionModel> T create(@NonNull String permission) {
-        final EntityManager entityManager = obtainTransactionalEntityManager(true);
+    public <T extends PermissionModel> T save(@NonNull String permission) {
         final T permissionModel = (T) permissionModelDefinition.instantiate(permission);
+        return save(permissionModel);
+    }
 
-        return entityManager.merge(permissionModel);
+    @NonNull
+    @Override
+    public <T extends PermissionModel> T save(@NonNull T permission) {
+        final EntityManager entityManager = obtainTransactionalEntityManager(true);
+        return entityManager.merge(permission);
     }
 
     @Override
-    public void delete(@NonNull String permission) {
+    public <T extends PermissionModel> void delete(@NonNull T permission) {
         final EntityManager entityManager = obtainTransactionalEntityManager(true);
-        final PermissionModel permissionModel = permissionModelDefinition.instantiate(permission);
-
-        entityManager.remove(permissionModel);
+        entityManager.remove(permission);
     }
 
     private @NonNull EntityManager obtainTransactionalEntityManager(boolean required) {

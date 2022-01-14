@@ -18,58 +18,45 @@ package de.ebf.security.init;
 import de.ebf.security.repository.PermissionModel;
 import de.ebf.security.repository.PermissionModelRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
-import org.springframework.util.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @RequiredArgsConstructor
-public class DefaultPermissionInitializer implements PermissionInitializer {
+public class DefaultPermissionInitializer extends AbstractPermissionInitializer {
 
     private final PermissionModelRepository permissionModelRepository;
 
     @Override
+    @Transactional
     public void initialize(@NonNull Set<String> declaredPermissions) {
-        final Set<String> existingPermissions = findExistingPermissions();
-
-        log.debug("Found existing permissions from Repository {}", existingPermissions);
-
-        declaredPermissions.forEach(permission -> {
-            log.debug("Checking if permission is already stored: {}", permission);
-
-            if (existingPermissions.contains(permission)) {
-                log.info("Permission {} already exists.", permission);
-                return;
-            }
-
-            final PermissionModel model = permissionModelRepository.create(permission);
-
-            log.info("Permission model has been created for value '{}': {}", permission, model);
-        });
-
-        existingPermissions.forEach(permission -> {
-            log.debug("Checking if permission should be removed: {}", permission);
-
-            if (declaredPermissions.contains(permission)) {
-                return;
-            }
-
-            log.info("Removing permission model for value: '{}'", permission);
-
-            permissionModelRepository.delete(permission);
-        });
+        super.initialize(declaredPermissions);
     }
 
-    private Set<String> findExistingPermissions() {
+    @Override
+    protected void savePermissions(@NonNull Set<String> permissions) {
+        final Collection<PermissionModel> models = permissionModelRepository.saveAll(permissions);
+
+        log.info("The following Permission models have been saved: {}", models);
+    }
+
+    @Override
+    protected <T extends PermissionModel> void removePermissions(@NonNull Set<T> permissions) {
+        permissionModelRepository.deleteAll(permissions);
+
+        log.info("The following Permission models have been removed: {}", permissions);
+    }
+
+    @NonNull
+    @Override
+    protected Set<PermissionModel> findExistingPermissions() {
         return permissionModelRepository.findAll()
                 .stream()
                 .filter(Objects::nonNull)
-                .map(PermissionModel::getPermission)
-                .filter(StringUtils::hasText)
                 .collect(Collectors.toSet());
     }
 

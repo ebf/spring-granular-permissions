@@ -87,25 +87,24 @@ class ConfigurationSpec extends Specification {
     def "should setup context with default annotation settings with custom repository and scanner implementation"() {
         setup:
         def repo = new InMemoryPermissionModelRepository()
-        repo.create("existing-permission")
-        repo.create("to-be-removed-permission")
+        repo.save("existing-permission")
+        repo.save("to-be-removed-permission")
 
         def scanner = Mock(PermissionScanner)
-        scanner.scan() >> ["existing-permission", "to-be-created-permission"]
 
         def runner = new ApplicationContextRunner()
                 .withBean(PermissionScanner) { scanner }
                 .withBean(PermissionModelRepository) { repo }
                 .withUserConfiguration(DefaultAnnotationConfiguration)
 
-        expect:
+        when:
         runner.run {
             assertThat(it)
                     .hasNotFailed()
                     .hasSingleBean(PermissionScanner)
                     .hasSingleBean(PermissionInitializer)
                     .hasSingleBean(PermissionModelRepository)
-                    .doesNotHaveBean(PermissionModelFinder)
+                    .hasSingleBean(PermissionModelFinder)
 
             assertThat(it)
                     .getBean(PermissionModelRepository)
@@ -128,6 +127,54 @@ class ConfigurationSpec extends Specification {
                     .getBean(PermissionInitializer)
                     .isInstanceOf(DefaultPermissionInitializer)
         }
+
+        then:
+        2 * scanner.scan() >> ["existing-permission", "to-be-created-permission"]
+    }
+
+    def "should setup context with custom initializer bean"() {
+        setup:
+        def initializer = Mock(PermissionInitializer)
+
+        def runner = new ApplicationContextRunner()
+                .withBean(PermissionInitializer) { initializer }
+                .withUserConfiguration(DefaultAnnotationConfiguration)
+
+        when:
+        runner.run {
+            assertThat(it)
+                    .hasNotFailed()
+                    .hasSingleBean(PermissionModelFinder)
+                    .hasSingleBean(PermissionModelRepository)
+                    .hasSingleBean(PermissionScanner)
+                    .hasSingleBean(PermissionInitializer)
+
+            assertThat(it)
+                    .getBean(PermissionModelFinder)
+                    .isInstanceOf(DefaultPermissionModelFinder)
+
+            assertThat(it)
+                    .getBean(PermissionInitializer)
+                    .isEqualTo(initializer)
+
+            assertThat(it)
+                    .getBean(PermissionModelRepository)
+                    .isInstanceOf(DefaultPermissionModelRepository)
+                    .extracting({ it.findAll() })
+                    .asInstanceOf(InstanceOfAssertFactories.collection(PermissionModel.class))
+                    .isEmpty()
+
+            assertThat(it)
+                    .getBean(PermissionScanner)
+                    .isInstanceOf(DefaultPermissionScanner)
+                    .extracting( {  it.scan() })
+                    .asInstanceOf(InstanceOfAssertFactories.collection(String.class))
+                    .hasSize(2)
+                    .containsExactlyInAnyOrder("models:findAll", "test:request")
+        }
+
+        then:
+        1 * initializer.initialize(_)
     }
 
     def "should setup context without initializing permissions"() {
@@ -142,7 +189,7 @@ class ConfigurationSpec extends Specification {
                     .hasSingleBean(PermissionModelFinder)
                     .hasSingleBean(PermissionModelRepository)
                     .hasSingleBean(PermissionScanner)
-                    .doesNotHaveBean(PermissionInitializer)
+                    .hasSingleBean(PermissionInitializer)
 
             assertThat(it)
                     .getBean(PermissionModelFinder)

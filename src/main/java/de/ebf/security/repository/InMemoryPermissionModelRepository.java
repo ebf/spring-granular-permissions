@@ -44,16 +44,20 @@ public class InMemoryPermissionModelRepository implements PermissionModelReposit
     @NonNull
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends PermissionModel> T create(@NonNull String permission) {
-        final PermissionModel model = new SimplePermissionModel(permission);
-        models.add(model);
+    public <T extends PermissionModel> T save(@NonNull String permission) {
+        return save((T) new SimplePermissionModel(permission));
+    }
 
-        return (T) model;
+    @NonNull
+    @Override
+    public <T extends PermissionModel> T save(@NonNull T permission) {
+        models.add(permission);
+        return permission;
     }
 
     @Override
-    public void delete(@NonNull String permission) {
-        models.remove(new SimplePermissionModel(permission));
+    public <T extends PermissionModel> void delete(@NonNull T permission) {
+        models.remove(permission);
     }
 
     @Value

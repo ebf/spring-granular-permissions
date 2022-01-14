@@ -15,16 +15,13 @@
  */
 package de.ebf.security;
 
-import de.ebf.security.annotations.PermissionScan.InitializationStrategy;
-import de.ebf.security.init.DefaultPermissionInitializer;
+import de.ebf.security.annotations.PermissionScan;
 import de.ebf.security.init.PermissionInitializer;
-import de.ebf.security.repository.InMemoryPermissionModelRepository;
-import de.ebf.security.repository.PermissionModelRepository;
+import de.ebf.security.scanner.DefaultPermissionScanner;
 import de.ebf.security.scanner.PermissionScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,36 +40,42 @@ import org.springframework.util.Assert;
 
 import java.util.Set;
 
-@Slf4j
-public class PermissionInitializerConfiguration implements ImportAware, InitializingBean {
+/**
+ * Configuration that is imported when the {@link PermissionScan} annotation is used. It would define
+ * a default implementation of the {@link PermissionScanner} bean if one is not already defined.
+ * <p>
+ * It would also provide a {@link PermissionInitializerRunner} that would be used to execute the
+ * initialization of those scanned permissions using the defined {@link PermissionInitializer} bean.
+ * If no {@link PermissionInitializer} bean is defined or if {@link PermissionScan.InitializationStrategy}
+ * is set to {@link PermissionScan.InitializationStrategy#NONE}, no initialization should occur.
+ */
+public class PermissionScannerConfiguration implements ImportAware, InitializingBean {
 
+    private AnnotationMetadata annotationMetadata;
     private AnnotationAttributes annotationAttributes;
 
     @Override
     public void afterPropertiesSet() {
-        Assert.notNull(annotationAttributes, "PermissionScan annotation needs to be present");
+        Assert.notNull(annotationMetadata, "PermissionScan annotation needs to be present");
+        annotationAttributes = PermissionScanSelector.getAnnotationAttributes(annotationMetadata);
     }
 
     @Override
-    public void setImportMetadata(@NonNull AnnotationMetadata importMetadata) {
-        annotationAttributes = PermissionScanSelector.getAnnotationAttributes(importMetadata);
+    public void setImportMetadata(@NonNull AnnotationMetadata annotationMetadata) {
+        this.annotationMetadata = annotationMetadata;
     }
 
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    @ConditionalOnMissingBean(PermissionInitializer.class)
-    public PermissionInitializer applicationRunnerPermissionInitializer(
-            ObjectProvider<PermissionModelRepository> permissionModelRepository
-    ) {
-        return new DefaultPermissionInitializer(permissionModelRepository.getIfAvailable(() -> {
-            log.info("No PermissionModelRepository Bean found, falling back to default in-memory implementation...");
-            return new InMemoryPermissionModelRepository();
-        }));
+    @ConditionalOnMissingBean(PermissionScanner.class)
+    public PermissionScanner defaultPermissionScanner() {
+        final DefaultPermissionScanner scanner = new DefaultPermissionScanner();
+        scanner.setBasePackageNames(PermissionScanSelector.getBasePackages(annotationMetadata, annotationAttributes));
+        return scanner;
     }
 
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    @ConditionalOnBean(PermissionInitializer.class)
     public PermissionInitializerRunner permissionInitializerRunner(PermissionScanner permissionScanner,
                                                                    PermissionInitializer permissionInitializer) {
         return new PermissionInitializerRunner(
@@ -87,31 +90,34 @@ public class PermissionInitializerConfiguration implements ImportAware, Initiali
     static class PermissionInitializerRunner implements InitializingBean, ApplicationListener<ApplicationEvent> {
         private final PermissionScanner scanner;
         private final PermissionInitializer initializer;
-        private final InitializationStrategy strategy;
+        private final PermissionScan.InitializationStrategy strategy;
 
         @Override
         public void afterPropertiesSet() {
-            if (InitializationStrategy.EARLY == strategy) {
+            if (PermissionScan.InitializationStrategy.EARLY == strategy) {
                 initialize();
             }
         }
 
         @Override
         public void onApplicationEvent(@NonNull ApplicationEvent event) {
-            if (InitializationStrategy.ON_REFRESH == strategy && event instanceof ContextRefreshedEvent) {
+            if (PermissionScan.InitializationStrategy.ON_REFRESH == strategy && event instanceof ContextRefreshedEvent) {
                 initialize();
             }
 
-            if (InitializationStrategy.ON_READY == strategy && event instanceof ApplicationReadyEvent) {
+            if (PermissionScan.InitializationStrategy.ON_READY == strategy && event instanceof ApplicationReadyEvent) {
                 initialize();
             }
         }
 
         private void initialize() {
+            Assert.state(PermissionScan.InitializationStrategy.NONE != strategy,
+                    "Attempted to initialize permissions with strategy set to NONE");
+
             try {
                 final Set<String> permissions = scanner.scan();
 
-                log.debug("Running permission initializer for {}", permissions);
+                log.debug("Running permission initializer with strategy {} for {}", strategy, permissions);
 
                 initializer.initialize(permissions);
             } catch (Exception e) {

@@ -26,27 +26,29 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 
 /**
+ * Import selector that would import the following configurations:
+ * <p>
+ * {@link PermissionScannerConfiguration} that would configure the default implementation
+ * of the {@link de.ebf.security.scanner.PermissionScanner} bean and the initializer.
+ * <p>
+ * {@link PermissionMethodSecurityConfiguration} configuration class that would configure the
+ * Spring method security interceptor to perform checks on method invocations annotated with
+ * {@link de.ebf.security.annotations.Permission}.
+ *
  * @author : vladimir.spasic@ebf.com
  * @since : 04.01.22, Tue
  **/
 public class PermissionScanSelector implements ImportSelector {
 
+    private static final String[] CONFIGURATION_IMPORTS = new String[] {
+            PermissionScannerConfiguration.class.getName(),
+            PermissionMethodSecurityConfiguration.class.getName()
+    };
+
     @NonNull
     @Override
     public String[] selectImports(@NonNull AnnotationMetadata metadata) {
-        final AnnotationAttributes attrs = getAnnotationAttributes(metadata);
-
-        final List<String> classNames = new ArrayList<>();
-        classNames.add(PermissionRepositoryConfiguration.class.getName());
-        classNames.add(PermissionsConfig.class.getName());
-
-        if (PermissionScan.InitializationStrategy.NONE != attrs.getEnum("strategy")) {
-            classNames.add(PermissionInitializerConfiguration.class.getName());
-        }
-
-        classNames.add(PermissionMethodSecurityConfiguration.class.getName());
-
-        return classNames.toArray(new String[0]);
+        return CONFIGURATION_IMPORTS;
     }
 
     static AnnotationAttributes getAnnotationAttributes(AnnotationMetadata metadata) {
