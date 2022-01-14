@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ebf.security.jwt.testapp.othermodels;
+package de.ebf.security.init;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import org.springframework.lang.NonNull;
 
-import de.ebf.security.annotations.PermissionModel;
+import java.util.Set;
 
-@PermissionModel
-@Entity
-public class PermissionModelWithoutPermissionNameField {
+/**
+ * Interface that is used to initialize the scanned permissions
+ *
+ * @author : vladimir.spasic@ebf.com
+ * @since : 04.01.22, Tue
+ **/
+public interface PermissionInitializer {
 
-    @Id
-    private String name;
+    void initialize(@NonNull Set<String> permissions) throws Exception;
+
 }

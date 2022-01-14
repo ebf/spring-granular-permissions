@@ -15,21 +15,18 @@
  */
 package de.ebf.security.guard;
 
+import lombok.Value;
 import org.springframework.security.access.ConfigAttribute;
 
+@Value
 public class PermissionSecurityAttribute implements ConfigAttribute {
-
     private static final long serialVersionUID = 6648857928991476524L;
-    private String attribute;
+
+    String attribute;
 
     public PermissionSecurityAttribute(String attribute) {
         super();
         this.attribute = attribute;
-    }
-
-
-    public String getAttribute() {
-        return attribute;
     }
 
 }

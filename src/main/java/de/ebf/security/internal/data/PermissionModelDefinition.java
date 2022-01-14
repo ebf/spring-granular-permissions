@@ -15,20 +15,57 @@
  */
 package de.ebf.security.internal.data;
 
+import de.ebf.security.exceptions.PermissionModelException;
+import de.ebf.security.repository.PermissionModel;
+import org.springframework.lang.NonNull;
+import org.springframework.util.ReflectionUtils;
+
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 
 /**
+ * Interface that contains all necessary data to identify an entity class and create
+ * new instances out of it.
+ *
+ * @see de.ebf.security.repository.PermissionModel
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
  */
-public interface PermissionModelDefinition {
+public interface PermissionModelDefinition<T extends PermissionModel> {
 
-    Class<?> getPermissionModelClass();
+    /**
+     * Type of the defined permission model that implements the
+     * {@link de.ebf.security.repository.PermissionModel} interface.
+     *
+     * @return permission model type, can't be {@literal null}
+     */
+    @NonNull Class<T> getPermissionModelClass();
 
-    Field getPermissionNameField();
+    /**
+     * Creates a new instance of the permission model. The implementing type needs to
+     * have a no-args constructor in order to create a new instance.
+     *
+     * @return Permission model instance, can't be {@literal null}
+     */
+    @NonNull T instantiate(@NonNull String permission);
 
-    Constructor getDefaultConstructor();
+    /**
+     * Attempt to create a {@link PermissionModelDefinition} for a given type.
+     *
+     * @param type Permission model type, can't be {@literal null}
+     * @param <T> Permission model generic type
+     * @return Permission model definition for the given type
+     * @throws PermissionModelException when no available constructor is available for the give type
+     */
+    static <T extends PermissionModel> PermissionModelDefinition<T> forType(@NonNull Class<T> type) throws PermissionModelException {
+        final Constructor<T> constructor;
+
+        try {
+            constructor = ReflectionUtils.accessibleConstructor(type);
+        } catch (NoSuchMethodException e) {
+            throw new PermissionModelException("Could not find a no-args accessible constructor for " +
+                    "Permission Model candidate with type: " + type, e);
+        }
+
+        return new DefaultPermissionModelDefinition<>(type, constructor);
+    }
 
 }

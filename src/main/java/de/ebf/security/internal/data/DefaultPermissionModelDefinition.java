@@ -15,90 +15,41 @@
  */
 package de.ebf.security.internal.data;
 
+import de.ebf.security.repository.PermissionModel;
+import lombok.Value;
+import org.springframework.lang.NonNull;
+import org.springframework.util.Assert;
+
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 
-public class DefaultPermissionModelDefinition implements PermissionModelDefinition {
+@Value
+class DefaultPermissionModelDefinition<T extends PermissionModel> implements PermissionModelDefinition<T> {
 
-    private Class<?> permissionModelClass;
-    private Field permissionNameField;
-    private Constructor defaultConstructor;
-
-    public DefaultPermissionModelDefinition(Class<?> permissionModelClass, Field permissionNameField,
-            Constructor defaultConstructor) {
-        this.permissionModelClass = permissionModelClass;
-        this.permissionNameField = permissionNameField;
-        this.defaultConstructor = defaultConstructor;
-    }
+    Class<T> permissionModelClass;
+    Constructor<T> constructor;
 
     @Override
-    public Class<?> getPermissionModelClass() {
-        return permissionModelClass;
-    }
+    public @NonNull T instantiate(@NonNull String permission) {
+        Assert.hasText(permission, () -> "Internal permission name can not be blank");
 
-    @Override
-    public Field getPermissionNameField() {
-        return permissionNameField;
-    }
+        final T model;
 
-    @Override
-    public Constructor getDefaultConstructor() {
-        return defaultConstructor;
-    }
+        try {
+            model = constructor.newInstance();
+        } catch (InstantiationException e) {
+            throw new IllegalStateException("Permission model type '" + permissionModelClass + "' can not be "
+                    + "an interface or an abstract class", e);
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            throw new IllegalStateException("Permission model type '" + permissionModelClass + "' needs to have "
+                    + "a public no-args constructor", e);
+        } catch (InvocationTargetException e) {
+            throw new IllegalStateException("Could not instantiate permission model type '" + permissionModelClass
+                    + "' as the underlying constructor threw an exception", e);
+        }
 
-    public void setPermissionModelClass(Class<?> permissionModelClass) {
-        this.permissionModelClass = permissionModelClass;
-    }
+        model.setPermission(permission);
 
-    public void setPermissionNameField(Field permissionNameField) {
-        this.permissionNameField = permissionNameField;
+        return model;
     }
-
-    public void setDefaultConstructor(Constructor defaultConstructor) {
-        this.defaultConstructor = defaultConstructor;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((defaultConstructor == null) ? 0 : defaultConstructor.hashCode());
-        result = prime * result + ((permissionModelClass == null) ? 0 : permissionModelClass.hashCode());
-        result = prime * result + ((permissionNameField == null) ? 0 : permissionNameField.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        DefaultPermissionModelDefinition other = (DefaultPermissionModelDefinition) obj;
-        if (defaultConstructor == null) {
-            if (other.defaultConstructor != null)
-                return false;
-        } else if (!defaultConstructor.equals(other.defaultConstructor))
-            return false;
-        if (permissionModelClass == null) {
-            if (other.permissionModelClass != null)
-                return false;
-        } else if (!permissionModelClass.equals(other.permissionModelClass))
-            return false;
-        if (permissionNameField == null) {
-            if (other.permissionNameField != null)
-                return false;
-        } else if (!permissionNameField.equals(other.permissionNameField))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "DefaultPermissionModelDefinition [permissionModelClass=" + permissionModelClass
-                + ", permissionNameField=" + permissionNameField + ", defaultConstructor=" + defaultConstructor + "]";
-    }
-
 }

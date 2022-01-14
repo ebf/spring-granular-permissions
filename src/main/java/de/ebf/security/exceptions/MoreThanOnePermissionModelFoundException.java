@@ -15,23 +15,21 @@
  */
 package de.ebf.security.exceptions;
 
-import org.springframework.beans.factory.config.BeanDefinition;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class MoreThanOnePermissionModelFoundException extends Exception {
-
+public class MoreThanOnePermissionModelFoundException extends PermissionModelException {
     private static final long serialVersionUID = 8915230310208728673L;
 
     private final Set<String> classNames;
 
-    public MoreThanOnePermissionModelFoundException(Collection<BeanDefinition> definitions) {
-        this(definitions.stream().map(BeanDefinition::getBeanClassName).collect(Collectors.toSet()));
+    public MoreThanOnePermissionModelFoundException(Collection<Class<?>> types) {
+        this(types.stream().map(Class::getName).collect(Collectors.toSet()));
     }
 
     public MoreThanOnePermissionModelFoundException(Set<String> classNames) {
+        super("Found more than Permission model candidate: " + classNames);
         this.classNames = classNames;
     }
 

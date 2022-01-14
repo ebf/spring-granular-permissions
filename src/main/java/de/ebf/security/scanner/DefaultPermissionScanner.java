@@ -15,66 +15,98 @@
  */
 package de.ebf.security.scanner;
 
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.util.ClassUtils;
-
 import de.ebf.security.annotations.Permission;
-import de.ebf.security.internal.permission.BasicPermission;
-import de.ebf.security.internal.permission.InternalPermission;
-import de.ebf.security.internal.services.impl.InterfaceBeanScanner;
+import de.ebf.security.annotations.ProtectedResource;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.EnvironmentAware;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
+
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
  */
-public class DefaultPermissionScanner implements PermissionScanner {
+public class DefaultPermissionScanner extends ClassPathScanningCandidateComponentProvider
+        implements PermissionScanner, EnvironmentAware, InitializingBean {
 
-    @Autowired
-    private InterfaceBeanScanner protectedResourceInterfaceBeanScanner;
+    private Set<String> basePackageNames;
 
-    private String basePackageName;
-
-    public void setBasePackage(String basePackageName) {
-        this.basePackageName = basePackageName;
+    public DefaultPermissionScanner() {
+        super(false);
+        addIncludeFilter(new AnnotationTypeFilter(ProtectedResource.class));
     }
 
     @Override
-    public Set<InternalPermission> scan() {
-        Set<InternalPermission> systemFunctionNames = new HashSet<>();
-        for (BeanDefinition bd : protectedResourceInterfaceBeanScanner.findCandidateComponents(basePackageName)) {
-            try {
-                final Class clazz = Class.forName(bd.getBeanClassName());
-                if (clazz == null) {
-                    continue;
-                }
-                Method[] declaredMethods = clazz.getDeclaredMethods();
+    public void afterPropertiesSet() {
+        Assert.notNull(basePackageNames, "Base package names can not be null");
+    }
 
-                for (Method systemFunctionResource : declaredMethods) {
+    public void setBasePackageNames(Set<String> basePackageNames) {
+        this.basePackageNames = basePackageNames;
+    }
 
-                    Method mostSpecificMethod = ClassUtils.getMostSpecificMethod(systemFunctionResource, clazz);
+    @Override
+    protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
+        return beanDefinition.getMetadata().isIndependent();
+    }
 
-                    Permission systemFunctionNameHolder = AnnotationUtils.findAnnotation(mostSpecificMethod,
-                            Permission.class);
+    @NonNull
+    @Override
+    public Set<String> scan() {
+        return basePackageNames.stream()
+                .map(this::findCandidateComponents)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(this::introspect)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+    }
 
-                    if (systemFunctionNameHolder == null) {
-                        continue;
-                    }
-
-                    systemFunctionNames.add(new BasicPermission(systemFunctionNameHolder.value()));
-                }
-
-            } catch (ClassNotFoundException e) {
-            }
+    private @Nullable Set<String> introspect(@NonNull BeanDefinition definition) {
+        if (logger.isTraceEnabled()) {
+            logger.trace("Attempting to find Permission annotations on methods for " + definition);
         }
 
-        return systemFunctionNames;
+        try {
+            final Class<?> clazz = Class.forName(definition.getBeanClassName());
+            final Method[] declaredMethods = ReflectionUtils.getDeclaredMethods(clazz);
+
+            final Set<String> permissions = new LinkedHashSet<>();
+
+            for (Method systemFunctionResource : declaredMethods) {
+                final Method mostSpecificMethod = ClassUtils.getMostSpecificMethod(systemFunctionResource, clazz);
+                final Permission permission = AnnotatedElementUtils.findMergedAnnotation(mostSpecificMethod, Permission.class);
+
+                if (permission == null) {
+                    continue;
+                }
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Found permission " + permission.value() + " on " + mostSpecificMethod);
+                }
+
+                permissions.add(permission.value());
+            }
+
+            return permissions;
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 
 }

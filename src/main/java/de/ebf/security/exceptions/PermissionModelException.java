@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.ebf.security.annotations;
+package de.ebf.security.exceptions;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+/**
+ * @author : vladimir.spasic@ebf.com
+ * @since : 04.01.22, Tue
+ **/
+public class PermissionModelException extends Exception {
+    private static final long serialVersionUID = 8915230310208722673L;
 
-@Target(value = { ElementType.METHOD, ElementType.FIELD })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface PermissionNameField {
+    public PermissionModelException(String message) {
+        super(message);
+    }
 
+    public PermissionModelException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

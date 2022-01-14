@@ -1,76 +1,68 @@
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies { classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1" }
-}
+plugins {
+    id 'java-library'
+    id 'groovy'
+    id 'idea'
+    id 'jacoco'
+    id 'maven-publish'
 
-apply plugin: 'java'
-apply plugin: 'groovy'
-apply plugin: 'eclipse'
-apply plugin: 'maven'
-apply plugin: "com.github.hierynomus.license"
-apply plugin: 'maven'
-
-sourceCompatibility = 1.8
-
-group = "de.ebf"
-archivesBaseName = "spring-granular-permissions"
-version = "1.0.3"
-
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'Spring Granular Permissions',
-        'Implementation-Version': version
-    }
+    id 'io.freefair.lombok' version '5.0.1'
+    id 'com.github.hierynomus.license'  version '0.16.1'
+    id 'org.hibernate.build.maven-repo-auth' version '3.0.2'
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url = uri("https://repository.hosting.ebf.de/nexus/repository/releases/") }
 }
 
-if (JavaVersion.current().isJava8Compatible()) {
-    allprojects {
-      tasks.withType(Javadoc) {
-        options.addStringOption('Xdoclint:none', '-quiet')
-      }
+group = "de.ebf"
+archivesBaseName = "spring-granular-permissions"
+version = "2.0.0"
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Spring Granular Permissions',
+                'Implementation-Version': archiveVersion
     }
-  }
+}
+
+java {
+    withSourcesJar()
+}
+
+idea {
+    module {
+        outputDir = file("build/classes/main")
+        testOutputDir = file("build/classes/test")
+    }
+}
 
 dependencies {
+    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa:2.6.2')
+    compileOnly('org.springframework.boot:spring-boot-starter-security:2.6.2')
 
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
-    compile("org.springframework.boot:spring-boot-starter-security:1.4.2.RELEASE")
-    compile("org.springframework.data:spring-data-jpa:1.10.5.RELEASE")
+    /* Test Database implementation */
+    testImplementation('com.h2database:h2:1.4.200')
 
-    compile("org.apache.openjpa:openjpa-persistence-jdbc:2.4.1") {
-        exclude group: 'commons-logging', module: 'commons-logging'
-        exclude group: 'junit', module: 'junit'
-    }
+    /* Spring and Spock Test dependencies */
+    testImplementation('org.springframework.boot:spring-boot-starter-test:2.6.2')
+    testImplementation('org.spockframework:spock-core:2.0-groovy-3.0')
+    testImplementation('org.spockframework:spock-spring:2.0-groovy-3.0')
 
-    testCompile("com.h2database:h2:1.4.191")
-    testCompile 'org.springframework:spring-test:4.2.6.RELEASE'
-    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'org.spockframework:spock-spring:1.0-groovy-2.4'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile 'cglib:cglib-nodep:2.2'
-    testCompile("org.springframework.boot:spring-boot-starter-web:1.4.2.RELEASE")
-    testCompile("org.springframework.boot:spring-boot-starter-data-rest:1.4.2.RELEASE")
-    testCompile("org.apache.httpcomponents:fluent-hc:4.5.1")
-    testCompile("org.springframework.boot:spring-boot-starter-data-jpa:1.4.2.RELEASE")
-}
+    /* Test utilities */
+    testImplementation('org.codehaus.groovy:groovy-json:3.0.9')
 
-configurations { deployerJars }
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
+    /* Spring Boot Test dependencies */
+    testImplementation('org.springframework.boot:spring-boot-starter-web:2.6.2')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-rest:2.6.2')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa:2.6.2')
+    testImplementation('org.springframework.boot:spring-boot-starter-security:2.6.2')
 }
 
 license {
@@ -78,51 +70,93 @@ license {
     exclude "LICENSE.txt"
 }
 
-artifacts { archives sourcesJar,javadocJar }
-
 test {
-   forkEvery(1)
+    useJUnitPlatform()
+
+    finalizedBy jacocoTestReport
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            configuration = configurations.deployerJars
+jacocoTestReport {
+    reports {
+        csv.required = false
+        xml.required = true
+        html.required = true
+    }
 
-            repository(url: "http://repository.dev.ebf.de/nexus/repository/releases") {
-                authentication(userName: nexus_user, password: nexus_pass)
+    finalizedBy jacocoTestCoverageVerification
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80 // at least 80% coverage is required
             }
+        }
+    }
+}
 
-            snapshotRepository(url: "http://repository.dev.ebf.de/nexus/repository/snapshots") {
-                authentication(userName: nexus_user, password: nexus_pass)
-            }
-            pom.project {
-                name 'Spring Granular Permissions'
-                packaging 'jar'
-                description "Granular permission library for spring boot"
-                url 'https://github.com/ebf/spring-granular-permissions.git'
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
 
-                scm {
-                    connection 'scm:git:https://github.com/ebf/spring-granular-permissions.git'
-                    developerConnection 'scm:git:https://github.com/ebf/spring-granular-permissions.git'
-                    url 'https://github.com/ebf/spring-granular-permissions.git'
-                }
+            pom {
+                name = 'Spring Granular Permissions'
+                description = "Granular permission library for spring boot"
+                url = 'https://github.com/ebf/spring-granular-permissions'
+                packaging = 'jar'
 
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
+                organization {
+                    name = 'EBF GmbH'
+                    url = 'https://ebf.com'
                 }
 
                 developers {
                     developer {
-                        id 'iznenad'
-                        name 'Nenad Nikolic'
-                        email 'nenad.nikolic@ebf.de'
+                        id = 'EBF'
+                        name = 'EBF'
+                        email = 'dev@ebf.com'
+                        organization = 'EBF GmbH'
+                        organizationUrl = 'https://ebf.com'
+                    }
+
+                    developers {
+                        developer {
+                            id = 'iznenad'
+                            name = 'Nenad Nikolic'
+                            email = 'nenad.nikolic@ebf.de'
+                            organization = 'EBF GmbH'
+                            organizationUrl = 'https://ebf.com'
+                        }
+                    }
+                }
+
+                issueManagement {
+                    system = 'Github'
+                    url = 'https://github.com/ebf/spring-granular-permissions/issues'
+                }
+
+                scm {
+                    developerConnection = 'scm:git:ssh://git@github.com/ebf/spring-granular-permissions.git'
+                    connection = 'scm:git:git://github.com/ebf/spring-granular-permissions.git'
+                    url = 'https://github.com/ebf/spring-granular-permissions'
+                }
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
             }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'ebf-releases-deployment'
+            url = 'https://repository.hosting.ebf.de/nexus/content/repositories/releases/'
         }
     }
 }

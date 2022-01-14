@@ -15,19 +15,16 @@
  */
 package de.ebf.security.jwt.testapp.models;
 
+import de.ebf.security.repository.PermissionModel;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import de.ebf.security.annotations.PermissionModel;
-import de.ebf.security.annotations.PermissionNameField;
-
 @Entity
-@PermissionModel
-public class Model {
+public class Model implements PermissionModel {
 
     @Id
-    @PermissionNameField
     private String name;
 
     @Column
@@ -41,6 +38,16 @@ public class Model {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public void setPermission(String permission) {
+        setName(permission);
+    }
+
+    @Override
+    public String getPermission() {
+        return getName();
     }
 
     public long getTimestamp() {

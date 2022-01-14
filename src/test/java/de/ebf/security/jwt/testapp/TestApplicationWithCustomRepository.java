@@ -17,16 +17,16 @@ package de.ebf.security.jwt.testapp;
 
 import de.ebf.security.jwt.testapp.models.Model;
 import de.ebf.security.jwt.testapp.repositories.ModelRepository;
+import de.ebf.security.repository.PermissionModel;
 import de.ebf.security.repository.PermissionModelRepository;
-import org.apache.commons.collections.IteratorUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.util.Streamable;
+import org.springframework.lang.NonNull;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 @Configuration
 @Import({TestApplicationWithCustomRepository.RepositoryConfiguration.class, TestApplicationWithAuthorizedUser.class})
@@ -48,17 +48,37 @@ public class TestApplicationWithCustomRepository {
             this.repository = repository;
         }
 
+        @NonNull
         @Override
-        public List<Object> findAllPermissionModels() {
-            return IteratorUtils.toList(repository.findAll().iterator());
+        @SuppressWarnings("unchecked")
+        public <T extends PermissionModel> Collection<T> findAll() {
+            return Streamable.of(repository.findAll())
+                    .map(model -> (T) model)
+                    .toSet();
+        }
+
+        @NonNull
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T extends PermissionModel> T save(@NonNull String permission) {
+            final Model model = new Model();
+            model.setPermission(permission);
+            model.setTimestamp(System.currentTimeMillis());
+
+            return save((T) model);
+        }
+
+        @NonNull
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T extends PermissionModel> T save(@NonNull T permission) {
+            return (T) repository.save((Model) permission);
         }
 
         @Override
-        public void saveAllPermissionModels(List<Object> permissionModels) {
-            permissionModels.stream().map(Model.class::cast).forEach(model -> {
-                model.setTimestamp(System.currentTimeMillis());
-                repository.save(model);
-            });
+        public <T extends PermissionModel> void delete(@NonNull T permission) {
+            repository.delete((Model) permission);
         }
+
     }
 }

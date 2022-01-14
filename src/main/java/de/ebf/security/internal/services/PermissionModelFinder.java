@@ -15,20 +15,25 @@
  */
 package de.ebf.security.internal.services;
 
-import de.ebf.security.exceptions.MoreThanOnePermissionModelFoundException;
-import de.ebf.security.exceptions.MoreThanOnePermissionNameFieldFoundException;
-import de.ebf.security.exceptions.NoPermissionFieldNameFoundException;
-import de.ebf.security.exceptions.NoPermissionModelFoundException;
+import de.ebf.security.exceptions.PermissionModelException;
 import de.ebf.security.internal.data.PermissionModelDefinition;
+import de.ebf.security.repository.PermissionModel;
 
 /**
+ * Interface used to find a {@link PermissionModelDefinition} from an entity type that
+ * implements the {@link de.ebf.security.repository.PermissionModel} interface.
+ *
+ * @see PermissionModel
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
  */
 public interface PermissionModelFinder {
 
-    PermissionModelDefinition find() throws MoreThanOnePermissionModelFoundException, NoPermissionModelFoundException,
-            NoPermissionFieldNameFoundException, MoreThanOnePermissionNameFieldFoundException;
+    /**
+     * Attempts to find a {@link PermissionModelDefinition} from the current application context.
+     *
+     * @return permission model definition
+     * @throws PermissionModelException when there is an issue when locating permission model entity type implementations
+     */
+    PermissionModelDefinition<PermissionModel> find() throws PermissionModelException;
 
 }

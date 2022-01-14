@@ -20,16 +20,31 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 
 @Configuration
 @Import(TestApplication.class)
 public class TestApplicationWithAuthorizedUser extends WebSecurityConfigurerAdapter {
 
+    private final PasswordEncoder encoder = new Pbkdf2PasswordEncoder();
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("test").password("test").roles("whatever").and().withUser("user")
-                .password("user")
-                .authorities(new SimpleGrantedAuthority("test:request"), new SimpleGrantedAuthority("models:findAll"));
+        auth
+            .inMemoryAuthentication()
+                .withUser("test")
+                .password(encoder.encode("test"))
+                .roles("whatever")
+            .and()
+                .withUser("user")
+                .password(encoder.encode("user"))
+                .authorities(
+                        new SimpleGrantedAuthority("test:request"),
+                        new SimpleGrantedAuthority("models:findAll")
+                )
+            .and()
+                .passwordEncoder(encoder);
     }
 
 }

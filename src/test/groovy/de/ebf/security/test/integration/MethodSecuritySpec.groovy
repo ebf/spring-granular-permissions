@@ -15,54 +15,47 @@
  */
 package de.ebf.security.test.integration
 
-
-
-import org.apache.http.client.fluent.Request
-import org.springframework.boot.SpringApplication
-
-import spock.lang.Specification
-import de.ebf.security.jwt.testapp.TestApplication
+import org.springframework.http.HttpStatus
+import org.springframework.test.context.ContextConfiguration
 import de.ebf.security.jwt.testapp.TestApplicationWithAuthorizedUser
 
-class MethodSecuritySpec extends Specification {
+@ContextConfiguration(classes = TestApplicationWithAuthorizedUser)
+class MethodSecuritySpec extends SecuritySpecification {
 
-    def "http request to / should result in 403" () {
-
-        setup:
-        def app = SpringApplication.run(TestApplication)
-        def encoder = Base64.encoder
-        def authBytes = encoder.encode("test:test".bytes)
-        def authString = new String(authBytes);
-
-        println authString
+    def "http request to / should result in 401 when no authentication is present" () {
 
         when:
-        def returnResponse = Request.Get("http://localhost:3001/").addHeader("Authorization", "Basic $authString").execute().returnResponse()
-        then:
-        returnResponse.statusLine.statusCode == 403
+        def response = request(null, Object)
 
-        cleanup:
-        app.stop()
-        app.close()
+        then:
+        response.statusCode == HttpStatus.UNAUTHORIZED
+    }
+
+    def "http request to / should result in 401 when invalid user credentials are sent" () {
+
+        when:
+        def response = request("unknown:unknown", Object)
+
+        then:
+        response.statusCode == HttpStatus.UNAUTHORIZED
     }
 
     def "http request to / should result in 200 when the user has permission" () {
 
-        setup:
-        def app = SpringApplication.run(TestApplicationWithAuthorizedUser)
-        def encoder = Base64.encoder
-        def authBytes = encoder.encode("user:user".bytes)
-        def authString = new String(authBytes);
+        when:
+        def response = request("user:user", Object)
 
-        println authString
+        then:
+        response.statusCode == HttpStatus.OK
+    }
+
+    def "http request to / should result in 403 when the user does not have sufficient permissions" () {
 
         when:
-        def returnResponse = Request.Get("http://localhost:3001/").addHeader("Authorization", "Basic $authString").execute().returnResponse()
-        then:
-        returnResponse.statusLine.statusCode == 200
+        def response = request("test:test", Object)
 
-        cleanup:
-        app.stop()
-        app.close()
+        then:
+        response.statusCode == HttpStatus.FORBIDDEN
     }
+
 }

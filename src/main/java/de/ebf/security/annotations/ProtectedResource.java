@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = ElementType.TYPE)

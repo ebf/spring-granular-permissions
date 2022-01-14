@@ -15,21 +15,20 @@
  */
 package de.ebf.security.jwt.testapp.configurations;
 
+import de.ebf.security.PermissionScannerConfiguration;
+import de.ebf.security.jwt.testapp.models.Model;
+import de.ebf.security.jwt.testapp.othermodels.OtherPermissionModel;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
-import de.ebf.security.PermissionsConfig;
-import de.ebf.security.jwt.testapp.models.Model;
-import de.ebf.security.jwt.testapp.othermodels.PermissionModelWithoutPermissionNameField;
-
 @Configuration
 @EnableAutoConfiguration
 @PropertySource(value = { "classpath:init-permissions-disabled.properties" })
-@Import(PermissionsConfig.class)
-@EntityScan(basePackageClasses = { Model.class, PermissionModelWithoutPermissionNameField.class })
+@Import(PermissionScannerConfiguration.class)
+@EntityScan(basePackageClasses = { Model.class, OtherPermissionModel.class })
 public class TwoPermissionModelsConfiguration {
 
 }

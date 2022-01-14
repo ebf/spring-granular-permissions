@@ -15,14 +15,17 @@
  */
 package de.ebf.security;
 
-import org.springframework.context.annotation.Bean;
+import de.ebf.security.guard.PermissionAccessDecisionVoter;
+import de.ebf.security.guard.PermissionMetadataSource;
 import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.method.MethodSecurityMetadataSource;
+import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration;
 
-import de.ebf.security.guard.PermissionAccessDecisionManager;
-import de.ebf.security.guard.PermissionMetadataSource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
@@ -30,17 +33,19 @@ import de.ebf.security.guard.PermissionMetadataSource;
  *
  */
 @EnableGlobalMethodSecurity
-public class MethodSecurityConfiguration extends GlobalMethodSecurityConfiguration {
+public class PermissionMethodSecurityConfiguration extends GlobalMethodSecurityConfiguration {
 
     @Override
-    @Bean
-    protected AccessDecisionManager accessDecisionManager() {
-        return new PermissionAccessDecisionManager();
+    protected MethodSecurityMetadataSource customMethodSecurityMetadataSource() {
+        return new PermissionMetadataSource();
     }
 
     @Override
-    @Bean
-    protected MethodSecurityMetadataSource customMethodSecurityMetadataSource() {
-        return new PermissionMetadataSource();
+    protected AccessDecisionManager accessDecisionManager() {
+        final AffirmativeBased manager = (AffirmativeBased) super.accessDecisionManager();
+        final List<AccessDecisionVoter<?>> voters = new ArrayList<>(manager.getDecisionVoters());
+        voters.add(new PermissionAccessDecisionVoter());
+
+        return new AffirmativeBased(voters);
     }
 }

@@ -15,10 +15,21 @@
  */
 package de.ebf.security.scanner;
 
+import org.springframework.lang.NonNull;
+
 import java.util.Set;
 
-import de.ebf.security.internal.permission.InternalPermission;
-
+/**
+ * Interface that would scan the classpath or the application context to provide a list
+ * of all {@link de.ebf.security.annotations.Permission} values where this annotation is used.
+ */
 public interface PermissionScanner {
-    Set<InternalPermission> scan();
+
+    /**
+     * Find all available permission values that are used with the application.
+     *
+     * @return collection of permission values, never {@literal null}
+     */
+    @NonNull Set<String> scan();
+
 }

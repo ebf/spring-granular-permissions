@@ -4,49 +4,27 @@ pipeline {
   }
 
   stages {
-    stage('Gradle Build and Test') {
-      agent {
-        docker {
-          image 'gradle:4.10.2-jdk8-slim'
-          reuseNode true
-        }
-      }
-      steps {
-          echo '----------------------------------------------------------------------------------------'
-          echo 'Building Backend...'
-          echo '----------------------------------------------------------------------------------------'
-          withCredentials([usernamePassword(credentialsId: 'nexus-maven-ebf-releases-deployment',
-                                                          usernameVariable: 'USER',
-                                                          passwordVariable: 'PASS')]) {
-            sh """
-              gradle clean build --no-daemon
-            """
-          }
-      }
-    }
-
     stage('Publish Archives') {
       when {
           branch 'master'
       }
       agent {
           docker {
-            image 'gradle:4.10.2-jdk8-slim'
+            image 'ebfdev/openjdk:8-jdk-alpine'
             reuseNode true
           }
       }
 
       steps {
-          withCredentials([usernamePassword(
-              credentialsId: 'nexus-maven-ebf-releases-deployment',
-              usernameVariable: 'USER',
-              passwordVariable: 'PASS'
+          configFileProvider([configFile(
+                  fileId: '2948ab4c-9add-401f-9bda-d22642238c6e',
+                  variable: 'MAVEN_SETTINGS'
           )]) {
               echo '----------------------------------------------------------------------------------------'
               echo 'Publish Archives'
               echo '----------------------------------------------------------------------------------------'
 
-              sh "gradle uploadArchives -Dorg.gradle.project.nexus_user=$USER -Dorg.gradle.project.nexus_pass=$PASS"
+              sh "./gradlew publish"
           }
       }
     }
