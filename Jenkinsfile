@@ -24,7 +24,7 @@ pipeline {
               echo 'Publish Archives'
               echo '----------------------------------------------------------------------------------------'
 
-              sh "./gradlew publish"
+              sh "./gradlew -Dmaven.settings=$MAVEN_SETTINGS publish"
           }
       }
     }
