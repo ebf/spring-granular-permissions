@@ -35,9 +35,7 @@ It's up to you to provide the other pieces of the app that make use of the permi
 
 ## Are there any preconditions?
 
-Yes and no. By default, this library uses JPA to manage scanned `Permissions` at app startup. Meaning, it is advisable to have the `EntityManagerFactory` Bean to be available and the `@EntityScan` annotation to be configured correctly.
-
-If you are not using JPA, you can configure your implementation of the `PermissionModelRepository` that either uses Mongo or any type of persistent storage.  
+Yes, this library uses JPA to manage scanned `Permissions` at app startup. Meaning, it is advisable to have the `EntityManagerFactory` Bean to be available and the `@EntityScan` annotation to be configured correctly.
 
 ## How do I configure all this?
 
