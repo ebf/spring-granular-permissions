@@ -31,10 +31,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -97,10 +94,10 @@ public class DefaultPermissionScanner extends ClassPathScanningCandidateComponen
                 }
 
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Found permission " + permission.value() + " on " + mostSpecificMethod);
+                    logger.trace("Found permission " + Arrays.toString(permission.value()) + " on " + mostSpecificMethod);
                 }
 
-                permissions.add(permission.value());
+                Collections.addAll(permissions, permission.value());
             }
 
             return permissions;

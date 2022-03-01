@@ -34,8 +34,10 @@ class PermissionScannerSpec extends Specification {
         def permissions = permissionScanner.scan()
 
         then:
-        permissions.size() == 2
+        permissions.size() == 4
         permissions.contains("test:request")
         permissions.contains("models:findAll")
+        permissions.contains("test-multiple:request-1")
+        permissions.contains("test-multiple:request-1")
     }
 }

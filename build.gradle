@@ -18,7 +18,7 @@ repositories {
 
 group = "de.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "2.0.0"
+version = "2.0.1"
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_8

@@ -15,7 +15,6 @@
  */
 package de.ebf.security.annotations;
 
-import de.ebf.security.scanner.PermissionScanner;
 
 import java.lang.annotation.*;
 
@@ -37,7 +36,7 @@ import java.lang.annotation.*;
 public @interface Permission {
 
     /**
-     * @return permission name to be checked
+     * @return permission names to be checked
      */
-    String value();
+    String[] value() default {};
 }

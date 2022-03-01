@@ -25,8 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestController {
 
     @RequestMapping(path = "/")
-    @Permission("test:request")
+    @Permission(value = "test:request")
     public void testRequest() {
+
+    }
+
+    @RequestMapping(path = "/multiple-permissions")
+    @Permission(value = { "test-multiple:request-1", "test-multiple:request-2" })
+    public void testMultiplePermissionsRequest() {
 
     }
 
