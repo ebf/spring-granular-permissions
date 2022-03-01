@@ -82,4 +82,21 @@ class PermissionAccessDecisionVoterSpec extends Specification {
         then:
         result == PermissionAccessDecisionVoter.ACCESS_GRANTED
     }
+
+    def "should grant access exceptions if authentication holds at least one sufficient authority"() {
+        setup:
+        Authentication authentication = Mock()
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("test")
+        authentication.authorities >> [authority]
+        PermissionSecurityAttribute attribute = new PermissionSecurityAttribute("test")
+        PermissionSecurityAttribute attribute2 = new PermissionSecurityAttribute("test-2")
+        def configAttributes = [attribute, attribute2]
+        def voter = new PermissionAccessDecisionVoter()
+
+        when:
+        def result = voter.vote(authentication, null, configAttributes)
+
+        then:
+        result == PermissionAccessDecisionVoter.ACCESS_GRANTED
+    }
 }

@@ -21,12 +21,13 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.method.AbstractMethodSecurityMetadataSource;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PermissionMetadataSource extends AbstractMethodSecurityMetadataSource {
 
@@ -37,18 +38,18 @@ public class PermissionMetadataSource extends AbstractMethodSecurityMetadataSour
 
     @Override
     public Collection<ConfigAttribute> getAttributes(Method method, Class<?> targetClass) {
-        final String permission = findPermission(method, targetClass);
+        final Set<String> permissions = findPermission(method, targetClass);
 
-        if (permission == null) {
+        if (CollectionUtils.isEmpty(permissions)) {
             return null;
         }
 
-        return Collections.singleton(
-                new PermissionSecurityAttribute(permission)
-        );
+        return permissions.stream()
+                .map(PermissionSecurityAttribute::new)
+                .collect(Collectors.toSet());
     }
 
-    private String findPermission(Method method, Class<?> targetClass) {
+    private Set<String> findPermission(Method method, Class<?> targetClass) {
         // The method may be on an interface, like on a Repository interface...
         final Method specificMethod = ClassUtils.getMostSpecificMethod(method, targetClass);
 
@@ -75,20 +76,26 @@ public class PermissionMetadataSource extends AbstractMethodSecurityMetadataSour
         return null;
     }
 
-    private String extractValue(Permission annotation, AnnotatedElement element) {
-        final String value = annotation.value();
+    private Set<String> extractValue(Permission annotation, AnnotatedElement element) {
+        Set<String> permissions = new HashSet<>();
+        final String[] values = annotation.value();
 
         if (logger.isDebugEnabled()) {
             logger.debug(String.format("%s annotation found on element %s with value: '%s'",
-                    Permission.class.getSimpleName(), element.toString(), value
+                    Permission.class.getSimpleName(), element.toString(), Arrays.toString(values)
             ));
         }
 
-        Assert.state(StringUtils.hasText(value), String.format(
-                "%s annotation that is present on the %s has a permission value that is blank.",
-                Permission.class.getSimpleName(), element.toString())
-        );
+        Arrays.stream(values).forEach(permission -> {
+            Assert.state(StringUtils.hasText(permission), String.format(
+                    "%s annotation that is present on the %s has a permission value that is blank.",
+                    Permission.class.getSimpleName(), element.toString())
+            );
 
-        return value;
+            permissions.add(permission);
+        });
+
+
+        return permissions;
     }
 }

@@ -41,7 +41,8 @@ public class TestApplicationWithAuthorizedUser extends WebSecurityConfigurerAdap
                 .password(encoder.encode("user"))
                 .authorities(
                         new SimpleGrantedAuthority("test:request"),
-                        new SimpleGrantedAuthority("models:findAll")
+                        new SimpleGrantedAuthority("models:findAll"),
+                        new SimpleGrantedAuthority("test-multiple:request-1")
                 )
             .and()
                 .passwordEncoder(encoder);

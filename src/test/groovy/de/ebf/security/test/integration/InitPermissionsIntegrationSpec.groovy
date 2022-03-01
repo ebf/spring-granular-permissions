@@ -40,8 +40,10 @@ class InitPermissionsIntegrationSpec extends SecuritySpecification {
         def models = query.getResultList()
 
         then:
-        models.size() == 2
+        models.size() == 4
         models.find { it.name == "test:request" }  != null
         models.find { it.name == "models:findAll" } != null
+        models.find { it.name == "test-multiple:request-1" }  != null
+        models.find { it.name == "test-multiple:request-2" }  != null
     }
 }

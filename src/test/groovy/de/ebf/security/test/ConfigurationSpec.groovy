@@ -66,17 +66,17 @@ class ConfigurationSpec extends Specification {
                 .isInstanceOf(DefaultPermissionModelRepository)
                 .extracting({ it.findAll() })
                 .asInstanceOf(InstanceOfAssertFactories.collection(PermissionModel.class))
-                .hasSize(2)
+                .hasSize(4)
                 .extracting("permission")
-                .containsExactlyInAnyOrder("models:findAll", "test:request")
+                .containsExactlyInAnyOrder("models:findAll", "test:request", "test-multiple:request-1", "test-multiple:request-2")
 
             assertThat(it)
                     .getBean(PermissionScanner)
                     .isInstanceOf(DefaultPermissionScanner)
                     .extracting( {  it.scan() })
                     .asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-                    .hasSize(2)
-                    .containsExactlyInAnyOrder("models:findAll", "test:request")
+                    .hasSize(4)
+                    .containsExactlyInAnyOrder("models:findAll", "test:request", "test-multiple:request-1", "test-multiple:request-2")
 
             assertThat(it)
                     .getBean(PermissionInitializer)
@@ -169,8 +169,8 @@ class ConfigurationSpec extends Specification {
                     .isInstanceOf(DefaultPermissionScanner)
                     .extracting( {  it.scan() })
                     .asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-                    .hasSize(2)
-                    .containsExactlyInAnyOrder("models:findAll", "test:request")
+                    .hasSize(4)
+                    .containsExactlyInAnyOrder("models:findAll", "test:request", "test-multiple:request-1", "test-multiple:request-2")
         }
 
         then:
@@ -207,8 +207,8 @@ class ConfigurationSpec extends Specification {
                     .isInstanceOf(DefaultPermissionScanner)
                     .extracting( {  it.scan() })
                     .asInstanceOf(InstanceOfAssertFactories.collection(String.class))
-                    .hasSize(2)
-                    .containsExactlyInAnyOrder("models:findAll", "test:request")
+                    .hasSize(4)
+                    .containsExactlyInAnyOrder("models:findAll", "test:request", "test-multiple:request-1", "test-multiple:request-2")
         }
     }
 

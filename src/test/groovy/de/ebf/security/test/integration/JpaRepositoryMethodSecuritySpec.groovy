@@ -66,8 +66,10 @@ class JpaRepositoryMethodSecuritySpec extends SecuritySpecification {
         and:
         def model = response.body
 
-        model.metadata.totalElements == 2
+        model.metadata.totalElements == 4
         model.content[0].timestamp == 0
         model.content[1].timestamp == 0
+        model.content[2].timestamp == 0
+        model.content[3].timestamp == 0
     }
 }
