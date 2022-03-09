@@ -191,6 +191,64 @@ You can choose when this initialization process should occur in the app startup 
  - `ON_REFRESH`
 > When the `ContextRefreshedEvent` is fired
 
+### Fine tuning the initialization
+
+You can also alter the behavior of the initialization phase via providing a bean 
+with custom implementation of `de.ebf.security.init.PermissionInitializer` interface.
+
+For example by default `de.ebf.security.init.DefaultPermissionInitializer implements PermissionInitializer`
+will do a cleanup for the permissions that previously persisted but no longer exists in the application source code (ex: `@Permission("foo") was part of the app but recently removed and no longer exists`).
+In this case if you like to keep those permissions persisted rather than removed by DefaultPermissionInitializer, you may consider to
+either implement the `PermissionInitializer` fully or just extend the `DefaultPermissionInitializer`
+to override specific functions to alter the behavior according to needs of your application.
+
+```java
+// Custom implementation would be
+public class MyCustomPermissionsInitializer extends DefaultPermissionInitializer {
+
+    public MyCustomPermissionsInitializer(PermissionModelRepository permissionModelRepository) {
+        super(permissionModelRepository);
+    }
+
+    // ...
+
+    // Overridden implementation will log any unused permissions 
+    // otherwise the default implementation would try to remove them.
+    @Override
+    protected <T extends PermissionModel> void removePermissions(@NotNull Set<T> permissions) {
+        // Just logging the permissions are not in use anymore. 
+        // But not removing from the db!
+        if (!CollectionUtils.isEmpty(permissions)) {
+            // Let us log those permissions during initialization as an information
+            log.info(
+                "Persisted permission(s) that no longer in use and can be cleaned up are listed below:\n\t{}",
+                permissions.stream().map(PermissionModel::getPermission).collect(Collectors.toSet())
+            );
+        }
+    }
+
+    // ...
+}
+
+// ... and Bean definition would be
+@Configuration
+@PermissionScan(
+    basePackageNames = { "my.package", "my.other.package" },
+    basePackageClasses = Type.class
+)
+public class SGPConfiguration {
+    // ...
+    @Bean
+    public PermissionInitializer nonInvasivePermissionInitializer(ObjectProvider<PermissionModelRepository> permissionModelRepository) {
+        PermissionModelRepository repository = permissionModelRepository.getIfAvailable(() -> {
+            throw new FatalBeanException("Bean for PermissionModelRepository not found! Granular Permission can not be initialized!");
+        });
+        return new MyCustomPermissionsInitializer(repository);
+    }
+    // ...
+}
+```
+
 ## Which errors/exceptions are thrown?
 
 Like with the [What does it do?](https://github.com/ebf/spring-granular-permissions#what-does-it-do) section, this is split in the same two parts:

@@ -94,7 +94,8 @@ public class GranularPermissionsAutoConfiguration {
             permissionModelDefinition = permissionModelFinder.find();
         } catch (NoPermissionModelFoundException e) {
             throw new FatalBeanException("Could not create Permission Model Definition bean. " +
-                    "You need to define at least class with a @PermissionModel annotation", e);
+                    "You need to define at least one `@Entity` that implements `" +
+                    PermissionModel.class.getName() + "` interface.", e);
         } catch (MoreThanOnePermissionModelFoundException e) {
             throw new FatalBeanException("Could not create Permission Model Definition bean. " +
                     "More than one Permission Model was found in classpath: " + e.getClassNames(), e);
