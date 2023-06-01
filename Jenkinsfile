@@ -10,8 +10,11 @@ pipeline {
       }
       agent {
           docker {
-            image 'ebfdev/openjdk:17-jdk-alpine'
-            reuseNode true
+                    registryUrl 'https://repository.hosting.ebf.de'
+                    registryCredentialsId 'credentials-repository-hosting-id'
+                    image 'repository.hosting.ebf.de/ebfdev/openjdk:17-jdk-alpine'
+                    args '-u root:root'
+                    reuseNode true
           }
       }
 
