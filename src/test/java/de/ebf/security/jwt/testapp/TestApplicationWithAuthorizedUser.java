@@ -15,37 +15,39 @@
  */
 package de.ebf.security.jwt.testapp;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 @Configuration
 @Import(TestApplication.class)
-public class TestApplicationWithAuthorizedUser extends WebSecurityConfigurerAdapter {
+@EnableWebSecurity
+public class TestApplicationWithAuthorizedUser {
 
-    private final PasswordEncoder encoder = new Pbkdf2PasswordEncoder();
+    private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth
-            .inMemoryAuthentication()
-                .withUser("test")
+    @Bean
+    public UserDetailsService userDetailsService() {
+        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+        manager.createUser(User.withUsername("test")
                 .password(encoder.encode("test"))
-                .roles("whatever")
-            .and()
-                .withUser("user")
+                .roles("whatever").build());
+
+        manager.createUser(User.withUsername("user")
                 .password(encoder.encode("user"))
                 .authorities(
                         new SimpleGrantedAuthority("test:request"),
                         new SimpleGrantedAuthority("models:findAll"),
                         new SimpleGrantedAuthority("test-multiple:request-1")
                 )
-            .and()
-                .passwordEncoder(encoder);
+                .build());
+        return manager;
     }
-
 }

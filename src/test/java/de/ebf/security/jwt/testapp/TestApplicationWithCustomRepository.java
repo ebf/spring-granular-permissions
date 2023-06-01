@@ -22,6 +22,7 @@ import de.ebf.security.repository.PermissionModelRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.util.Streamable;
 import org.springframework.lang.NonNull;
@@ -52,7 +53,7 @@ public class TestApplicationWithCustomRepository {
         @Override
         @SuppressWarnings("unchecked")
         public <T extends PermissionModel> Collection<T> findAll() {
-            return Streamable.of(repository.findAll())
+            return repository.findAll(Pageable.unpaged())
                     .map(model -> (T) model)
                     .toSet();
         }

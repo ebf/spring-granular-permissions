@@ -23,9 +23,9 @@ import de.ebf.security.jwt.testapp.othermodels.OtherPermissionModel
 import spock.lang.Specification
 import de.ebf.security.jwt.testapp.models.Model
 
-import javax.persistence.EntityManagerFactory
-import javax.persistence.metamodel.EntityType
-import javax.persistence.metamodel.Metamodel
+import jakarta.persistence.EntityManagerFactory
+import jakarta.persistence.metamodel.EntityType
+import jakarta.persistence.metamodel.Metamodel
 
 
 class DefaultPermissionModelFinderSpec extends Specification {

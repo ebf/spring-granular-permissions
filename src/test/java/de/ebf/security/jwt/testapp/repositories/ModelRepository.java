@@ -20,10 +20,11 @@ import de.ebf.security.annotations.ProtectedResource;
 import de.ebf.security.jwt.testapp.models.Model;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 @ProtectedResource
-public interface ModelRepository extends PagingAndSortingRepository<Model, String> {
+public interface ModelRepository extends CrudRepository<Model, String>, PagingAndSortingRepository<Model, String> {
 
     @Permission("models:findAll")
     @Override

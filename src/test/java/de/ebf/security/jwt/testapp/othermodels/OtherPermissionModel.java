@@ -17,8 +17,8 @@ package de.ebf.security.jwt.testapp.othermodels;
 
 import de.ebf.security.repository.PermissionModel;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 @Entity
 public class OtherPermissionModel implements PermissionModel {
