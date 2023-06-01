@@ -53,7 +53,7 @@ public class TestApplicationWithCustomRepository {
         @Override
         @SuppressWarnings("unchecked")
         public <T extends PermissionModel> Collection<T> findAll() {
-            return repository.findAll(Pageable.unpaged())
+            return Streamable.of(repository.findAll())
                     .map(model -> (T) model)
                     .toSet();
         }
