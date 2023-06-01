@@ -10,7 +10,7 @@ pipeline {
       }
       agent {
           docker {
-            image 'ebfdev/openjdk:8-jdk-alpine'
+            image 'ebfdev/openjdk:17-jdk-alpine'
             reuseNode true
           }
       }
