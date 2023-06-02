@@ -5,7 +5,7 @@ plugins {
     id 'jacoco'
     id 'maven-publish'
 
-    id 'io.freefair.lombok' version '5.0.1'
+    id 'io.freefair.lombok' version '6.4.2'
     id 'com.github.hierynomus.license'  version '0.16.1'
     id 'org.hibernate.build.maven-repo-auth' version '3.0.2'
 }
@@ -16,13 +16,13 @@ repositories {
     maven { url = uri("https://repository.hosting.ebf.de/nexus/repository/releases/") }
 }
 
-group = "de.ebf"
+group = "com.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "2.0.1"
+version = "3.0.0"
 
 compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 jar {
@@ -44,25 +44,25 @@ idea {
 }
 
 dependencies {
-    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa:2.6.2')
-    compileOnly('org.springframework.boot:spring-boot-starter-security:2.6.2')
+    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa:3.1.0')
+    compileOnly('org.springframework.boot:spring-boot-starter-security:3.1.0')
 
     /* Test Database implementation */
-    testImplementation('com.h2database:h2:1.4.200')
+    testImplementation('com.h2database:h2:2.1.214')
 
     /* Spring and Spock Test dependencies */
-    testImplementation('org.springframework.boot:spring-boot-starter-test:2.6.2')
-    testImplementation('org.spockframework:spock-core:2.0-groovy-3.0')
-    testImplementation('org.spockframework:spock-spring:2.0-groovy-3.0')
+    testImplementation('org.springframework.boot:spring-boot-starter-test:3.1.0')
+    testImplementation('org.spockframework:spock-core:2.4-M1-groovy-3.0')
+    testImplementation('org.spockframework:spock-spring:2.4-M1-groovy-3.0')
 
     /* Test utilities */
-    testImplementation('org.codehaus.groovy:groovy-json:3.0.9')
+    testImplementation('org.codehaus.groovy:groovy-json:3.0.17')
 
     /* Spring Boot Test dependencies */
-    testImplementation('org.springframework.boot:spring-boot-starter-web:2.6.2')
-    testImplementation('org.springframework.boot:spring-boot-starter-data-rest:2.6.2')
-    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa:2.6.2')
-    testImplementation('org.springframework.boot:spring-boot-starter-security:2.6.2')
+    testImplementation('org.springframework.boot:spring-boot-starter-web:3.1.0')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-rest:3.1.0')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa:3.1.0')
+    testImplementation('org.springframework.boot:spring-boot-starter-security:3.1.0')
 }
 
 license {
