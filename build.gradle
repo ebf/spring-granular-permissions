@@ -16,7 +16,7 @@ repositories {
     maven { url = uri("https://repository.hosting.ebf.de/nexus/repository/releases/") }
 }
 
-group = "de.ebf"
+group = "com.ebf"
 archivesBaseName = "spring-granular-permissions"
 version = "3.0.0"
 

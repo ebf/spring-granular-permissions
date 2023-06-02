@@ -44,16 +44,16 @@ Yes, this library uses JPA to manage scanned `Permissions` at app startup. Meani
 For gradle:
 
 ```groovy
-compile("de.ebf:spring-granular-permissions:2.0.0")
+compile("com.ebf:spring-granular-permissions:3.0.0")
 ```
 
 For maven:
 
 ```xml
 <dependency>
-	<groupId>de.ebf</groupId>
+	<groupId>com.ebf</groupId>
 	<artifactId>spring-granular-permissions</artifactId>
-	<version>2.0.0</version>
+	<version>3.0.0</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ public class MyDbConfiguration{
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import de.ebf.security.repository.PermissionModel;
+import com.ebf.security.repository.PermissionModel;
 
 @Entity
 public class Model extends BaseModel implements PermissionModel {
@@ -108,7 +108,7 @@ public class Model extends BaseModel implements PermissionModel {
 Configure SGP by annotating any of your configuration classes by the `PermissionScan` annotation and tell it where to look for the `Permission` annotations on your protected resources.
 
 ```java
-import de.ebf.security.annotations.PermissionScan;
+import com.ebf.security.annotations.PermissionScan;
 
 @Configuration
 @PermissionScan
@@ -122,7 +122,7 @@ By default, the `PermissionScan` annotation is going to scan for `Permissions` i
 If you wish to change this location, or include other ones, you can use the `basePackageNames` or `basePackageClasses` attributes like so:
 
 ```java
-import de.ebf.security.annotations.PermissionScan;
+import com.ebf.security.annotations.PermissionScan;
 import my.classpackage.Type;
 
 @Configuration
@@ -171,7 +171,7 @@ Initialization process does the following:
 You can choose to omit this process completely by specifying the `strategy` attribute on the `PermissionScan` annotation:
 
 ```java
-import de.ebf.security.annotations.PermissionScan;
+import com.ebf.security.annotations.PermissionScan;
 
 @Configuration
 @PermissionScan(strategy = PermissionScan.InitializationStrategy.NONE)
