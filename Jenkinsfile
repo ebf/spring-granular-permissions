@@ -12,7 +12,7 @@ pipeline {
           docker {
                     registryUrl 'https://repository.hosting.ebf.de'
                     registryCredentialsId 'credentials-repository-hosting-id'
-                    image 'repository.hosting.ebf.de/ebfdev/openjdk:17-jdk-alpine'
+                    image 'repository.hosting.ebf.de/ebfdev/eclipse-temurin:17-jdk-alpine'
                     args '-u root:root'
                     reuseNode true
           }

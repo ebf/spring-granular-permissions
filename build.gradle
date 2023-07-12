@@ -9,7 +9,6 @@ plugins {
     id 'com.github.hierynomus.license'  version '0.16.1'
     id 'org.hibernate.build.maven-repo-auth' version '3.0.2'
 }
-
 repositories {
     mavenLocal()
     mavenCentral()
@@ -18,7 +17,7 @@ repositories {
 
 group = "com.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "3.0.0"
+version = "3.0.1"
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_17
