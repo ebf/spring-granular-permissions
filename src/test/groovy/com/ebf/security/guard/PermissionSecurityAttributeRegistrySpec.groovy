@@ -13,62 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.guard
+package com.ebf.security.guard
+
+import com.ebf.security.guard.testcases.ProtectedClass
+import com.ebf.security.guard.testcases.ProtectedInterface
+import com.ebf.security.guard.testcases.PublicClass
+import com.ebf.security.guard.testcases.PublicInterface
 
 import java.lang.reflect.Method
 
 import spock.lang.Specification
-import com.ebf.security.guard.PermissionMetadataSource
-import com.ebf.security.test.guard.testcases.ProtectedClass
-import com.ebf.security.test.guard.testcases.ProtectedInterface
-import com.ebf.security.test.guard.testcases.PublicClass
-import com.ebf.security.test.guard.testcases.PublicInterface
 
+class PermissionSecurityAttributeRegistrySpec extends Specification {
 
-class PermissionMetadataSourceSpec extends Specification {
+    PermissionSecurityAttributeRegistry registry;
+
+    def setup() {
+        registry = new PermissionSecurityAttributeRegistry()
+    }
 
     def "should return config attributes from the protected interface for protected interface public class" () {
         setup:
-        Method method = ProtectedInterface.class.getDeclaredMethod("protectedMethod")
-        def metadataSource = new PermissionMetadataSource()
+        Method method = PublicClass.class.getDeclaredMethod("protectedMethod")
 
         when:
-        def result = metadataSource.getAttributes(method, PublicClass)
+        def result = registry.get(method, PublicClass)
 
         then:
-        result[0].getAttribute() == "protectMe"
+        result[0] == "protectMe"
     }
     def "should return config attributes from the protected implementation for public interface protected class" () {
         setup:
         Method method = PublicInterface.class.getDeclaredMethod("publicMethod")
-        def metadataSource = new PermissionMetadataSource()
 
         when:
-        def result = metadataSource.getAttributes(method, ProtectedClass)
+        def result = registry.get(method, ProtectedClass)
 
         then:
-        result[0].getAttribute() == "protectedPublic"
+        result[0] == "protectedPublic"
     }
     def "should return null attributes for public interface public class" () {
         setup:
         Method method = PublicInterface.class.getDeclaredMethod("publicMethod")
-        def metadataSource = new PermissionMetadataSource()
 
         when:
-        def result = metadataSource.getAttributes(method, PublicClass)
+        def result = registry.get(method, PublicClass)
 
         then:
-        result== null
+        result.isEmpty()
     }
     def "should return config attributes from class for protected interface protected class" () {
         setup:
         Method method = ProtectedInterface.class.getDeclaredMethod("protectedMethod")
-        def metadataSource = new PermissionMetadataSource()
 
         when:
-        def result = metadataSource.getAttributes(method, ProtectedClass)
+        def result = registry.get(method, ProtectedClass)
 
         then:
-        result[0].getAttribute() == "overrideProtectMe"
+        result[0] == "overrideProtectMe"
     }
 }

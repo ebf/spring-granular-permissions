@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.integration
+package com.ebf.security.integration
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -24,7 +24,6 @@ import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpHeaders
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
-import org.springframework.util.Base64Utils
 import org.springframework.web.util.UriComponentsBuilder
 import spock.lang.Specification
 
@@ -60,7 +59,7 @@ abstract class SecuritySpecification extends Specification {
         final def headers = new HttpHeaders()
 
         if (credentials != null) {
-            final def authorization = Base64Utils.encodeToString(credentials.bytes)
+            final def authorization = Base64.getEncoder().encodeToString(credentials.bytes)
             headers.setBasicAuth(authorization)
         }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test
+package com.ebf.security
 
 import com.ebf.security.annotations.PermissionScan
 import com.ebf.security.init.DefaultPermissionInitializer
@@ -29,10 +29,12 @@ import com.ebf.security.repository.PermissionModelRepository
 import com.ebf.security.scanner.DefaultPermissionScanner
 import com.ebf.security.scanner.PermissionScanner
 import org.assertj.core.api.InstanceOfAssertFactories
+import org.springframework.aop.Advisor
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.ComponentScan
+import org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor
 import spock.lang.Specification
 
 import static org.assertj.core.api.Assertions.assertThat
@@ -130,6 +132,28 @@ class ConfigurationSpec extends Specification {
 
         then:
         2 * scanner.scan() >> ["existing-permission", "to-be-created-permission"]
+    }
+
+    def "should setup context security method interceptor and adviser"() {
+        setup:
+        def runner = new ApplicationContextRunner()
+                .withUserConfiguration(DefaultAnnotationConfiguration)
+
+        expect:
+        runner.run {
+            assertThat(it)
+                    .hasNotFailed()
+                    .hasBean(PermissionMethodSecurityConfiguration.INTERCEPTOR_BEAN_NAME)
+                    .hasBean(PermissionMethodSecurityConfiguration.ADVISOR_BEAN_NAME)
+
+            assertThat(it.getBean(PermissionMethodSecurityConfiguration.INTERCEPTOR_BEAN_NAME))
+                .isInstanceOf(AuthorizationManagerBeforeMethodInterceptor)
+                .isInstanceOf(Advisor)
+
+            assertThat(it.getBean(PermissionMethodSecurityConfiguration.ADVISOR_BEAN_NAME))
+                    .isInstanceOf(AuthorizationManagerBeforeMethodInterceptor)
+                    .isInstanceOf(Advisor)
+        }
     }
 
     def "should setup context with custom initializer bean"() {

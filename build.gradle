@@ -9,6 +9,7 @@ plugins {
     id 'com.github.hierynomus.license'  version '0.16.1'
     id 'org.hibernate.build.maven-repo-auth' version '3.0.2'
 }
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -17,7 +18,7 @@ repositories {
 
 group = "com.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "3.0.1"
+version = "3.1.0"
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -42,26 +43,30 @@ idea {
     }
 }
 
+ext {
+    set('springVersion', '3.1.4')
+}
+
 dependencies {
-    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa:3.1.0')
-    compileOnly('org.springframework.boot:spring-boot-starter-security:3.1.0')
+    compileOnly("org.springframework.boot:spring-boot-starter-data-jpa:${springVersion}")
+    compileOnly("org.springframework.boot:spring-boot-starter-security:${springVersion}")
 
     /* Test Database implementation */
     testImplementation('com.h2database:h2:2.1.214')
 
-    /* Spring and Spock Test dependencies */
-    testImplementation('org.springframework.boot:spring-boot-starter-test:3.1.0')
+    /* Spring Boot Test dependencies */
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${springVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-web:${springVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-rest:${springVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa:${springVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-security:${springVersion}")
+
+    /* Spock Test dependencies */
     testImplementation('org.spockframework:spock-core:2.4-M1-groovy-3.0')
     testImplementation('org.spockframework:spock-spring:2.4-M1-groovy-3.0')
 
     /* Test utilities */
     testImplementation('org.codehaus.groovy:groovy-json:3.0.17')
-
-    /* Spring Boot Test dependencies */
-    testImplementation('org.springframework.boot:spring-boot-starter-web:3.1.0')
-    testImplementation('org.springframework.boot:spring-boot-starter-data-rest:3.1.0')
-    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa:3.1.0')
-    testImplementation('org.springframework.boot:spring-boot-starter-security:3.1.0')
 }
 
 license {

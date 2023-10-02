@@ -25,6 +25,7 @@ import java.util.Set;
  * @author : vladimir.spasic@ebf.com
  * @since : 04.01.22, Tue
  **/
+@FunctionalInterface
 public interface PermissionInitializer {
 
     void initialize(@NonNull Set<String> permissions) throws Exception;

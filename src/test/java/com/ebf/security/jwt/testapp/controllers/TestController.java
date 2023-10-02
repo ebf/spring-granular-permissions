@@ -17,6 +17,8 @@ package com.ebf.security.jwt.testapp.controllers;
 
 import com.ebf.security.annotations.Permission;
 import com.ebf.security.annotations.ProtectedResource;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,12 +28,14 @@ public class TestController {
 
     @RequestMapping(path = "/")
     @Permission(value = "test:request")
+    @PreAuthorize("hasAuthority('spring-security-method-permission')")
     public void testRequest() {
 
     }
 
     @RequestMapping(path = "/multiple-permissions")
     @Permission(value = { "test-multiple:request-1", "test-multiple:request-2" })
+    @PostAuthorize("hasAuthority('spring-security-method-permission')")
     public void testMultiplePermissionsRequest() {
 
     }

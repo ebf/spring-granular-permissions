@@ -42,7 +42,8 @@ public class PermissionScanSelector implements ImportSelector {
 
     private static final String[] CONFIGURATION_IMPORTS = new String[] {
             PermissionScannerConfiguration.class.getName(),
-            PermissionMethodSecurityConfiguration.class.getName()
+            PermissionMethodSecurityConfiguration.class.getName(),
+            PermissionMethodSecurityConfiguration.PermissionImportBeanDefinitionRegistrar.class.getName()
     };
 
     @NonNull
