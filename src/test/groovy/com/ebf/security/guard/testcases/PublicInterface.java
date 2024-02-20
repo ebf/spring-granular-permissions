@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.guard.testcases;
+package com.ebf.security.guard.testcases;
 
 public interface PublicInterface {
 

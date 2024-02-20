@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.guard;
+package com.ebf.security.guard.testcases;
 
-import lombok.Value;
-import org.springframework.security.access.ConfigAttribute;
+import com.ebf.security.annotations.Permission;
+import com.ebf.security.annotations.ProtectedResource;
 
-@Value
-public class PermissionSecurityAttribute implements ConfigAttribute {
-    private static final long serialVersionUID = 6648857928991476524L;
+@ProtectedResource
+public interface ProtectedInterface {
 
-    String attribute;
-
-    public PermissionSecurityAttribute(String attribute) {
-        super();
-        this.attribute = attribute;
-    }
+    @Permission("protectMe")
+    void protectedMethod();
 
 }

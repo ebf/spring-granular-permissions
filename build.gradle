@@ -5,10 +5,18 @@ plugins {
     id 'jacoco'
     id 'maven-publish'
 
-    id 'io.freefair.lombok' version '6.4.2'
+    id 'io.freefair.lombok' version '8.4'
+    id 'io.spring.dependency-management' version '1.1.4'
     id 'com.github.hierynomus.license'  version '0.16.1'
-    id 'org.hibernate.build.maven-repo-auth' version '3.0.2'
+    id 'org.hibernate.build.maven-repo-auth' version '3.0.4' apply(false)
 }
+
+// do not apply the plugin when the build is running on Github actions as there we do not have
+// an m2-settings.xml file. This plugin would throw an NPE when credentials could not be resolved
+if (System.getenv('CI') != 'github') {
+    apply plugin: 'org.hibernate.build.maven-repo-auth'
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -17,12 +25,7 @@ repositories {
 
 group = "com.ebf"
 archivesBaseName = "spring-granular-permissions"
-version = "3.0.1"
-
-compileJava {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
+version = "3.1.0"
 
 jar {
     manifest {
@@ -42,26 +45,39 @@ idea {
     }
 }
 
+ext {
+    set('springVersion', '3.2.2')
+}
+
 dependencies {
-    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa:3.1.0')
-    compileOnly('org.springframework.boot:spring-boot-starter-security:3.1.0')
+    compileOnly('org.springframework.boot:spring-boot-starter-data-jpa')
+    compileOnly('org.springframework.boot:spring-boot-starter-security')
 
     /* Test Database implementation */
-    testImplementation('com.h2database:h2:2.1.214')
-
-    /* Spring and Spock Test dependencies */
-    testImplementation('org.springframework.boot:spring-boot-starter-test:3.1.0')
-    testImplementation('org.spockframework:spock-core:2.4-M1-groovy-3.0')
-    testImplementation('org.spockframework:spock-spring:2.4-M1-groovy-3.0')
-
-    /* Test utilities */
-    testImplementation('org.codehaus.groovy:groovy-json:3.0.17')
+    testImplementation('com.h2database:h2')
 
     /* Spring Boot Test dependencies */
-    testImplementation('org.springframework.boot:spring-boot-starter-web:3.1.0')
-    testImplementation('org.springframework.boot:spring-boot-starter-data-rest:3.1.0')
-    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa:3.1.0')
-    testImplementation('org.springframework.boot:spring-boot-starter-security:3.1.0')
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    testImplementation('org.springframework.boot:spring-boot-starter-web')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-rest')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa')
+    testImplementation('org.springframework.boot:spring-boot-starter-security')
+
+    /* Spock Test dependencies */
+    testImplementation('org.spockframework:spock-spring:2.4-M1-groovy-4.0')
+
+    /* Test utilities */
+    testImplementation('org.apache.groovy:groovy-json:4.0.18')
+}
+
+dependencyManagement {
+    generatedPomCustomization {
+        enabled = false
+    }
+
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${springVersion}")
+    }
 }
 
 license {

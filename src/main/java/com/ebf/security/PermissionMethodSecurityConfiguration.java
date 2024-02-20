@@ -15,37 +15,81 @@
  */
 package com.ebf.security;
 
-import com.ebf.security.guard.PermissionAccessDecisionVoter;
-import com.ebf.security.guard.PermissionMetadataSource;
-import org.springframework.security.access.AccessDecisionManager;
-import org.springframework.security.access.AccessDecisionVoter;
-import org.springframework.security.access.method.MethodSecurityMetadataSource;
-import org.springframework.security.access.vote.AffirmativeBased;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.ebf.security.annotations.Permission;
+import com.ebf.security.guard.PermissionAuthorizationManager;
+import io.micrometer.observation.ObservationRegistry;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.springframework.aop.Advisor;
+import org.springframework.aop.Pointcut;
+import org.springframework.aop.support.Pointcuts;
+import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.context.annotation.Role;
+import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.security.authorization.AuthorizationEventPublisher;
+import org.springframework.security.authorization.method.AuthorizationInterceptorsOrder;
+import org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
 
 /**
+ * Configuration class that is imported as a configuration candidate by the
+ * {@link com.ebf.security.annotations.PermissionScan} annotation.
+ * <p>
+ * Primary goal of this configuration is to set up method security interceptor around the
+ * {@link Permission} annotation. Methods or classes that are using this annotation are
+ * subjected to introspection by the Spring AOP {@link AuthorizationManagerBeforeMethodInterceptor}
+ * that is using the {@link PermissionAuthorizationManager} to evauluate if the current
+ * {@link org.springframework.security.core.Authentication} has sufficient permissions.
+ *
  * @author Nenad Nikolic <nenad.nikolic@ebf.de>
- *
- *
+ * @author Vladimir Spasic <vladimir.spasic@ebf.de>
  */
-@EnableGlobalMethodSecurity
-public class PermissionMethodSecurityConfiguration extends GlobalMethodSecurityConfiguration {
+@Configuration(proxyBeanMethods = false)
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+public class PermissionMethodSecurityConfiguration {
 
-    @Override
-    protected MethodSecurityMetadataSource customMethodSecurityMetadataSource() {
-        return new PermissionMetadataSource();
+    static final String ADVISOR_BEAN_NAME = "granularPermissionAuthorizationAdvisor";
+    static final String INTERCEPTOR_BEAN_NAME = "granularPermissionAuthorizationMethodInterceptor";
+
+    @Bean(name = INTERCEPTOR_BEAN_NAME)
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    static MethodInterceptor granularPermissionAuthorizationMethodInterceptor(
+            ObjectProvider<SecurityContextHolderStrategy> strategyProvider,
+            ObjectProvider<AuthorizationEventPublisher> eventPublisherProvider,
+            ObjectProvider<ObservationRegistry> registryProvider) {
+
+        AuthorizationManagerBeforeMethodInterceptor interceptor = new AuthorizationManagerBeforeMethodInterceptor(
+                createClassOrMethodPointcut(), PermissionAuthorizationManager.create(registryProvider)
+        );
+
+        interceptor.setOrder(AuthorizationInterceptorsOrder.FIRST.getOrder());
+        strategyProvider.ifAvailable(interceptor::setSecurityContextHolderStrategy);
+        eventPublisherProvider.ifAvailable(interceptor::setAuthorizationEventPublisher);
+        return interceptor;
     }
 
-    @Override
-    protected AccessDecisionManager accessDecisionManager() {
-        final AffirmativeBased manager = (AffirmativeBased) super.accessDecisionManager();
-        final List<AccessDecisionVoter<?>> voters = new ArrayList<>(manager.getDecisionVoters());
-        voters.add(new PermissionAccessDecisionVoter());
-
-        return new AffirmativeBased(voters);
+    private static Pointcut createClassOrMethodPointcut() {
+        return Pointcuts.union(new AnnotationMatchingPointcut(null, Permission.class, true),
+                new AnnotationMatchingPointcut(Permission.class, true));
     }
+
+    static class PermissionImportBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
+
+        @Override
+        public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+            final BeanDefinition definition = registry.getBeanDefinition(INTERCEPTOR_BEAN_NAME);
+
+            if (definition instanceof RootBeanDefinition advisor) {
+                advisor.setTargetType(Advisor.class);
+                registry.registerBeanDefinition(ADVISOR_BEAN_NAME, advisor);
+            }
+        }
+    }
+
 }

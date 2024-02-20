@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.scanner
+package com.ebf.security.scanner
 
 import com.ebf.security.jwt.testapp.TestApplication
 import com.ebf.security.scanner.PermissionScanner

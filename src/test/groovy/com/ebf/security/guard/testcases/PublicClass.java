@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.guard.testcases;
+package com.ebf.security.guard.testcases;
 
-import com.ebf.security.annotations.Permission;
-import com.ebf.security.annotations.ProtectedResource;
+public class PublicClass implements ProtectedInterface, PublicInterface {
 
-@ProtectedResource
-public interface ProtectedInterface {
+    @Override
+    public void publicMethod() {
 
-    @Permission("protectMe")
-    void protectedMethod();
+    }
+
+    @Override
+    public void protectedMethod() {
+
+    }
 
 }

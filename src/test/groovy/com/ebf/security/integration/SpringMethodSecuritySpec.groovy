@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.integration
+package com.ebf.security.integration
 
-import org.springframework.http.HttpStatus
-import org.springframework.test.context.ContextConfiguration
 import com.ebf.security.jwt.testapp.TestApplicationWithAuthorizedUser
+import org.springframework.http.HttpStatus
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
+import org.springframework.test.context.ContextConfiguration
 
+@EnableMethodSecurity
 @ContextConfiguration(classes = TestApplicationWithAuthorizedUser)
-class MethodSecuritySpec extends SecuritySpecification {
+class SpringMethodSecuritySpec extends SecuritySpecification {
 
     def "http request to / should result in 401 when no authentication is present" () {
 
@@ -40,13 +42,13 @@ class MethodSecuritySpec extends SecuritySpecification {
         response.statusCode == HttpStatus.UNAUTHORIZED
     }
 
-    def "http request to / should result in 200 when the user has permission" () {
+    def "http request to / should result in 403 when the user has no spring method security permission" () {
 
         when:
         def response = request("user:user", Object)
 
         then:
-        response.statusCode == HttpStatus.OK
+        response.statusCode == HttpStatus.FORBIDDEN
     }
 
     def "http request to / should result in 403 when the user does not have sufficient permissions" () {

@@ -16,9 +16,10 @@
 package com.ebf.security.guard;
 
 import com.ebf.security.annotations.Permission;
+import lombok.extern.slf4j.Slf4j;
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.core.MethodClassKey;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.security.access.ConfigAttribute;
-import org.springframework.security.access.method.AbstractMethodSecurityMetadataSource;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -27,26 +28,37 @@ import org.springframework.util.StringUtils;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class PermissionMetadataSource extends AbstractMethodSecurityMetadataSource {
+/**
+ * Registry that would resolve and cache the permission name from the {@link MethodInvocation}
+ * that is intercepted by the configured authorization method interceptor.
+ */
+@Slf4j
+final class PermissionSecurityAttributeRegistry {
 
-    @Override
-    public Collection<ConfigAttribute> getAllConfigAttributes() {
-        return Collections.emptyList();
+    private final Map<MethodClassKey, Collection<String>> cache = new ConcurrentHashMap<>();
+
+    Collection<String> get(MethodInvocation invocation) {
+        final Object target = invocation.getThis();
+        final Class<?> targetClass = (target != null) ? target.getClass() : null;
+
+        return get(invocation.getMethod(), targetClass);
     }
 
-    @Override
-    public Collection<ConfigAttribute> getAttributes(Method method, Class<?> targetClass) {
+    Collection<String> get(Method method, Class<?> targetClass) {
+        final MethodClassKey key = new MethodClassKey(method, targetClass);
+        return this.cache.computeIfAbsent(key, (k) -> resolve(method, targetClass));
+    }
+
+    private Collection<String> resolve(Method method, Class<?> targetClass) {
         final Set<String> permissions = findPermission(method, targetClass);
 
         if (CollectionUtils.isEmpty(permissions)) {
-            return null;
+            return Collections.emptySet();
         }
 
-        return permissions.stream()
-                .map(PermissionSecurityAttribute::new)
-                .collect(Collectors.toSet());
+        return Collections.unmodifiableSet(permissions);
     }
 
     private Set<String> findPermission(Method method, Class<?> targetClass) {
@@ -80,10 +92,10 @@ public class PermissionMetadataSource extends AbstractMethodSecurityMetadataSour
         Set<String> permissions = new HashSet<>();
         final String[] values = annotation.value();
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(String.format("%s annotation found on element %s with value: '%s'",
+        if (log.isDebugEnabled()) {
+            log.debug("{} annotation found on element {} with value: '{}'",
                     Permission.class.getSimpleName(), element.toString(), Arrays.toString(values)
-            ));
+            );
         }
 
         Arrays.stream(values).forEach(permission -> {

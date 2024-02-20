@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ebf.security.test.internal.data
+package com.ebf.security.internal.data
 
 import com.ebf.security.exceptions.PermissionModelException
 import com.ebf.security.internal.data.PermissionModelDefinition
