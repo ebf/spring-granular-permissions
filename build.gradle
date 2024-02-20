@@ -8,7 +8,13 @@ plugins {
     id 'io.freefair.lombok' version '8.4'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'com.github.hierynomus.license'  version '0.16.1'
-    id 'org.hibernate.build.maven-repo-auth' version '3.0.4'
+    id 'org.hibernate.build.maven-repo-auth' version '3.0.4' apply(false)
+}
+
+// do not apply the plugin when the build is running on Github actions as there we do not have
+// an m2-settings.xml file. This plugin would throw an NPE when credentials could not be resolved
+if (System.getenv('CI') != 'github') {
+    apply plugin: 'org.hibernate.build.maven-repo-auth'
 }
 
 repositories {
