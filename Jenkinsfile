@@ -1,7 +1,5 @@
 pipeline {
-  agent {
-    label 'slave'
-  }
+  agent none
 
   stages {
     stage('Publish Archives') {
