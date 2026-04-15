@@ -27,7 +27,7 @@ import java.lang.annotation.*;
  * {@link org.springframework.security.core.Authentication} as one of the
  * {@link org.springframework.security.core.GrantedAuthority authorities}.
  *
- * @author Nenad Nikolic <nenad.nikolic@ebf.de>
+ * @author Nenad Nikolic {@literal <nenad.nikolic@ebf.de>}
  */
 @Inherited
 @Documented

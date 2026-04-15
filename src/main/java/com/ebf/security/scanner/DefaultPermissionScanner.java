@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author Nenad Nikolic <nenad.nikolic@ebf.de>
+ * @author Nenad Nikolic {@literal <nenad.nikolic@ebf.de>}
  */
 public class DefaultPermissionScanner extends ClassPathScanningCandidateComponentProvider
         implements PermissionScanner, EnvironmentAware, InitializingBean {

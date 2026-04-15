@@ -27,7 +27,7 @@ import java.lang.reflect.Constructor;
  * new instances out of it.
  *
  * @see com.ebf.security.repository.PermissionModel
- * @author Nenad Nikolic <nenad.nikolic@ebf.de>
+ * @author Nenad Nikolic {@literal <nenad.nikolic@ebf.de>}
  */
 public interface PermissionModelDefinition<T extends PermissionModel> {
 

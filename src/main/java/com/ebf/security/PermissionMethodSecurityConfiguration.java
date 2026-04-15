@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Nenad Nikolic <nenad.nikolic@ebf.de>
+ * @author Nenad Nikolic {@literal <nenad.nikolic@ebf.de>}
  *
  *
  */

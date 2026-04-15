@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * @author Nenad Nikolic <nenad.nikolic@ebf.de>
+ * @author Nenad Nikolic {@literal <nenad.nikolic@ebf.de>}
  */
 @Slf4j
 @RequiredArgsConstructor
