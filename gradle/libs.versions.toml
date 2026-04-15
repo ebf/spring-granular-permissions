@@ -1,0 +1,26 @@
+[versions]
+spring-boot = "3.1.0"
+spock = "2.4-M1-groovy-3.0"
+groovy = "3.0.17"
+
+[libraries]
+spring-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
+spring-autoconfigure-processor = { module = "org.springframework.boot:spring-boot-autoconfigure-processor", version.ref = "spring-boot" }
+
+spring-starter-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+spring-starter-rest = { module = "org.springframework.boot:spring-boot-starter-data-rest", version.ref = "spring-boot" }
+spring-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+
+groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
+
+test-junit-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "6.0.3" }
+test-h2 = { module = "com.h2database:h2", version = "2.1.214" }
+test-spock = { module = "org.spockframework:spock-spring", version.ref = "spock" }
+
+[bundles]
+test = [
+    "spring-starter-jpa", "spring-starter-rest", "spring-starter-security", "spring-starter-webmvc",
+    "spring-starter-test", "groovy-json", "test-h2", "test-spock"
+]

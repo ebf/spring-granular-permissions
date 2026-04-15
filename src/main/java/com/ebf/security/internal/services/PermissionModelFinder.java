@@ -24,7 +24,7 @@ import com.ebf.security.repository.PermissionModel;
  * implements the {@link com.ebf.security.repository.PermissionModel} interface.
  *
  * @see PermissionModel
- * @author Nenad Nikolic <nenad.nikolic@ebf.de>
+ * @author Nenad Nikolic {@literal <nenad.nikolic@ebf.de>}
  */
 public interface PermissionModelFinder {
 
